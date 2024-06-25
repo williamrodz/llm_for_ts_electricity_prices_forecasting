@@ -38,69 +38,76 @@ output:
       graph of the predicted values against 80% prediction interval
 
 """
-def predict(model:str,
-            input_data:[float],
-            context_range:[int],
-            prediction_length,
-            autoregressions:int=0):
+import numpy as np
+import torch
+import matplotlib.pyplot as plt
+
+def predict(model: str,
+            input_data: [float],
+            context_range: [int],
+            prediction_length: int,
+            autoregressions: int = 0):
   
-  # Determine size of inputed time series
-  print("Predicting time series")
-  n = len(input_data)
-  (context_start_index, context_end_index) = context_range
-  (forecast_start_index, forecast_end_index) = (context_end_index, context_end_index+prediction_length)
-  forecast_range = range(forecast_start_index, forecast_end_index)
+    # Determine size of input time series
+    print("Predicting time series")
+    n = len(input_data)
+    (context_start_index, context_end_index) = context_range
 
-  if n < 2:
-    raise ValueError("Time series data has only one data point or is empty")
-  elif not 0 <= context_start_index < context_end_index <= n:
-    raise ValueError("Invalid context range")
+    if n < 2:
+        raise ValueError("Time series data has only one data point or is empty")
+    elif not 0 <= context_start_index < context_end_index <= n:
+        raise ValueError("Invalid context range")
 
-  print(f"There are {n} data points in the time series.")
-  print(f"Will be using {context_range} data points for predicting values at  t={forecast_range[0]} to t={forecast_range[-1]}")
+    print(f"There are {n} data points in the time series.")
+    print(f"Will be using {context_range} data points for predicting values")
 
+    all_forecasts = []
+    all_low = []
+    all_high = []
 
-  # Check if model is available
-  if model == "Chronos":
-    # Use Chronos model to predict time series
-    print("Using Chronos model to predict time series")
-    # Convert data to tensor
-    context_slice = input_data[context_start_index:context_end_index]
-    data_tensor = torch.tensor(context_slice)
-    # Predict time series
+    for i in range(autoregressions + 1):
+        # Use Chronos model to predict time series
+        print(f"Using Chronos model to predict time series, iteration {i + 1}")
 
-    forecast = pipeline.predict(
-        context=data_tensor,
-        prediction_length=prediction_length,
-        num_samples=CHRONOS_NUM_SAMPLES_DEFAULT
-    )
+        # Ensure context range is updated to the latest data
+        context_start_index = max(0, len(input_data) - (context_end_index - context_start_index))
+        context_end_index = len(input_data)
 
-    # Plot the predicted values and get intervals
-    low, median, high = np.quantile(forecast[0].numpy(), [0.1, 0.5, 0.9], axis=0)
+        # Convert data to tensor
+        context_slice = input_data[context_start_index:context_end_index]
+        data_tensor = torch.tensor(context_slice, dtype=torch.float32)
 
+        # Predict time series
+        forecast = pipeline.predict(
+            context=data_tensor,
+            prediction_length=prediction_length,
+            num_samples=CHRONOS_NUM_SAMPLES_DEFAULT
+        )
+
+        # Get the quantiles for the prediction interval
+        low, median, high = np.quantile(forecast[0].numpy(), [0.1, 0.5, 0.9], axis=0)
+
+        all_forecasts.extend(median)
+        all_low.extend(low)
+        all_high.extend(high)
+
+        # Update the input data for the next iteration
+        input_data = np.concatenate((input_data, median))
+
+    # Plot the predicted values and prediction intervals
     plt.figure(figsize=(8, 4))
-    plt.plot(input_data, color="royalblue", label="Input data")
-    plt.plot(forecast_range, median, color="tomato", label="median forecast")
-    plt.fill_between(forecast_range, low, high, color="tomato", alpha=0.3, label="80% prediction interval")
+    plt.plot(range(n), input_data[:n], color="royalblue", label="Input data")
+    plt.plot(range(n, n + len(all_forecasts)), all_forecasts, color="tomato", label="Median forecast")
+    plt.fill_between(range(n, n + len(all_low)), all_low, all_high, color="tomato", alpha=0.3, label="80% prediction interval")
     plt.legend()
     plt.grid()
     plt.show()
-    return forecast[0].numpy()
+
+    return np.array(all_forecasts)
 
 
-    
-  elif model == "S-ARIMA":
-    # Use S-ARIMA model to predict time series
-    print("Using S-ARIMA model to predict time series")
-    # Convert data to pandas series
-    data_series = pd.Series(data)
-    # Fit the model
-    model = pm.auto_arima(data_series, seasonal=False, stepwise=True, suppress_warnings=True)
-    # Predict time series
-    predictions = model.predict(n_periods=prediction_length)
-    print(f"Predicted values: {predictions}")
-  else:
-    raise ValueError("Invalid model")
+
+
 
 
 
@@ -119,4 +126,4 @@ if __name__ == "__main__":
   length_passengers_data = len(passengers_column)
   context_range = (0, length_passengers_data)
   prediction_length = 12
-  predict("Chronos", passengers_column, context_range, prediction_length)
+  predict("Chronos", passengers_column, context_range, prediction_length,autoregressions=5)
