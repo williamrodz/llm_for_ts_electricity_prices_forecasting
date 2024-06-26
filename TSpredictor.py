@@ -44,10 +44,20 @@ import matplotlib.pyplot as plt
 
 def predict(model: str,
             input_data: [float],
+            initial_context_end: int,
             context_range: [int],
             prediction_length: int,
-            autoregressions: int = 0):
-  
+            autoregressions: int = 0,
+            median_predictions: [float] = pd.Series([]),
+            low_predictions: [float] = pd.Series([]),
+            high_predictions: [float] = pd.Series([])):
+    print(" -------- PREDICT RUN ---------")
+    print("Parameters are:")
+    print("----------")
+    print(f"model: {model}\ninput_data: {len(input_data)}\ninitial_context_end: {initial_context_end}\ncontext_range: {context_range}\nprediction_length: {prediction_length}\nautoregressions: {autoregressions}\nmedian_predictions: {median_predictions}\nlow_predictions: {low_predictions}\nhigh_predictions: {high_predictions}")
+    print("----------")
+    print("")
+    
     # Determine size of input time series
     print("Predicting time series")
     n = len(input_data)
@@ -55,57 +65,56 @@ def predict(model: str,
 
     if n < 2:
         raise ValueError("Time series data has only one data point or is empty")
-    elif not 0 <= context_start_index < context_end_index <= n:
+    elif not 0 <= context_start_index < context_end_index <= (n + len(median_predictions)):
         raise ValueError("Invalid context range")
 
-    print(f"There are {n} data points in the time series.")
-    print(f"Will be using {context_range} data points for predicting values")
+    # Convert data to tensor
+    context_slice = input_data[context_start_index:context_end_index]
+    # print ("context_slice", type(context_slice), context_slice)
+    print(median_predictions)
 
-    all_forecasts = []
-    all_low = []
-    all_high = []
+    extended_slice_by_predictions = pd.concat([context_slice, median_predictions])
+    context_data_tensor = torch.tensor(extended_slice_by_predictions.tolist(), dtype=torch.float32)
 
-    for i in range(autoregressions + 1):
-        # Use Chronos model to predict time series
-        print(f"Using Chronos model to predict time series, iteration {i + 1}")
+    # Predict time series
+    forecast = pipeline.predict(
+        context=context_data_tensor,
+        prediction_length=prediction_length,
+        num_samples=CHRONOS_NUM_SAMPLES_DEFAULT
+    )
 
-        # Ensure context range is updated to the latest data
-        context_start_index = max(0, len(input_data) - (context_end_index - context_start_index))
-        context_end_index = len(input_data)
+    # Get the quantiles for the prediction interval
+    low, median, high = np.quantile(forecast[0].numpy(), [0.1, 0.5, 0.9], axis=0)
 
-        # Convert data to tensor
-        context_slice = input_data[context_start_index:context_end_index]
-        data_tensor = torch.tensor(context_slice, dtype=torch.float32)
+    # Append predictions
+    median_predictions = pd.concat([median_predictions,pd.Series(median)])
+    low_predictions = pd.concat([low_predictions,pd.Series(low)])
+    high_predictions = pd.concat([high_predictions,pd.Series(high)])   
 
-        # Predict time series
-        forecast = pipeline.predict(
-            context=data_tensor,
-            prediction_length=prediction_length,
-            num_samples=CHRONOS_NUM_SAMPLES_DEFAULT
-        )
+    if autoregressions == 0:
+        # graph
+        # Plot the predicted values and prediction intervals
 
-        # Get the quantiles for the prediction interval
-        low, median, high = np.quantile(forecast[0].numpy(), [0.1, 0.5, 0.9], axis=0)
+        num_median_predictions = len(median_predictions)
+        
 
-        all_forecasts.extend(median)
-        all_low.extend(low)
-        all_high.extend(high)
+        plt.figure(figsize=(8, 4))
+        plt.plot(range(n), input_data[:n], color="royalblue", label="Input data")
+        plt.plot(range(initial_context_end, initial_context_end + num_median_predictions), median_predictions, color="tomato", label="Median forecast")
+        plt.fill_between(range(initial_context_end, initial_context_end + num_median_predictions), low_predictions, high_predictions, color="tomato", alpha=0.3, label="80% prediction interval")
+        plt.legend()
+        plt.grid()
+        plt.show()
 
-        # Update the input data for the next iteration
-        input_data = np.concatenate((input_data, median))
+        print("CONVERGED: Reached base case")
+        return median_predictions
 
-    # Plot the predicted values and prediction intervals
-    plt.figure(figsize=(8, 4))
-    plt.plot(range(n), input_data[:n], color="royalblue", label="Input data")
-    plt.plot(range(n, n + len(all_forecasts)), all_forecasts, color="tomato", label="Median forecast")
-    plt.fill_between(range(n, n + len(all_low)), all_low, all_high, color="tomato", alpha=0.3, label="80% prediction interval")
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-    return np.array(all_forecasts)
-
-
+    elif autoregressions >= 1:
+        # combine new prediction into input data AT the context's end
+        new_context_range = (context_start_index + prediction_length, context_end_index + prediction_length)
+        # recurse
+        print("RECURSING: Autoregressions left:", autoregressions - 1)
+        return predict(model, input_data, initial_context_end, new_context_range, prediction_length, autoregressions - 1, median_predictions, low_predictions, high_predictions)
 
 
 
@@ -124,6 +133,6 @@ if __name__ == "__main__":
   passengers_data_table = df = pd.read_csv("https://raw.githubusercontent.com/AileenNielsen/TimeSeriesAnalysisWithPython/master/data/AirPassengers.csv")
   passengers_column = passengers_data_table["#Passengers"]
   length_passengers_data = len(passengers_column)
-  context_range = (0, length_passengers_data)
+  context_range = (0, length_passengers_data * 3 // 4)
   prediction_length = 12
-  predict("Chronos", passengers_column, context_range, prediction_length,autoregressions=5)
+  predict("Chronos", passengers_column, context_range[-1], context_range, prediction_length,autoregressions=2)
