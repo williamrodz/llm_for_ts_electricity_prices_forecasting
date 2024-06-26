@@ -8,11 +8,6 @@ import statsmodels.api as sm
 import pmdarima as pm
 
 
-pipeline = ChronosPipeline.from_pretrained(
-    "amazon/chronos-t5-tiny",
-    device_map="cpu",  # use "cpu" for CPU inference and "mps" for Apple Silicon
-    torch_dtype=torch.bfloat16,
-)
 CHRONOS_NUM_SAMPLES_DEFAULT = 20
 
 """
@@ -42,19 +37,33 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
-def predict(model: str,
-            input_data: [float],
-            initial_context_end: int,
+pipeline = ChronosPipeline.from_pretrained(
+    "amazon/chronos-t5-small",
+    device_map="cpu",  # use "cpu" for CPU inference and "mps" for Apple Silicon
+    torch_dtype=torch.bfloat16,
+)
+def chronos_predict(input_data: [float],
             context_range: [int],
             prediction_length: int,
             autoregressions: int = 0,
             median_predictions: [float] = pd.Series([]),
             low_predictions: [float] = pd.Series([]),
-            high_predictions: [float] = pd.Series([])):
+            high_predictions: [float] = pd.Series([]),
+            initial_context_end: int = None
+):
+
+
     print(" -------- PREDICT RUN ---------")
     print("Parameters are:")
-    print("----------")
-    print(f"model: {model}\ninput_data: {len(input_data)}\ninitial_context_end: {initial_context_end}\ncontext_range: {context_range}\nprediction_length: {prediction_length}\nautoregressions: {autoregressions}\nmedian_predictions: {median_predictions}\nlow_predictions: {low_predictions}\nhigh_predictions: {high_predictions}")
+    print(f"""
+    input_data: {len(input_data)}\n
+    initial_context_end: {initial_context_end}\n
+    context_range: {context_range}\n
+    prediction_length: {prediction_length}\n
+    autoregressions: {(autoregressions)}\n
+    median_predictions: {len(median_predictions)}\n
+    low_predictions: {len(low_predictions)}\n
+    high_predictions: {len(high_predictions)}""")
     print("----------")
     print("")
     
@@ -71,7 +80,6 @@ def predict(model: str,
     # Convert data to tensor
     context_slice = input_data[context_start_index:context_end_index]
     # print ("context_slice", type(context_slice), context_slice)
-    print(median_predictions)
 
     extended_slice_by_predictions = pd.concat([context_slice, median_predictions])
     context_data_tensor = torch.tensor(extended_slice_by_predictions.tolist(), dtype=torch.float32)
@@ -91,6 +99,8 @@ def predict(model: str,
     low_predictions = pd.concat([low_predictions,pd.Series(low)])
     high_predictions = pd.concat([high_predictions,pd.Series(high)])   
 
+    initial_context_end_to_carry = context_range[-1] if initial_context_end is None else initial_context_end
+
     if autoregressions == 0:
         # graph
         # Plot the predicted values and prediction intervals
@@ -100,8 +110,8 @@ def predict(model: str,
 
         plt.figure(figsize=(8, 4))
         plt.plot(range(n), input_data[:n], color="royalblue", label="Input data")
-        plt.plot(range(initial_context_end, initial_context_end + num_median_predictions), median_predictions, color="tomato", label="Median forecast")
-        plt.fill_between(range(initial_context_end, initial_context_end + num_median_predictions), low_predictions, high_predictions, color="tomato", alpha=0.3, label="80% prediction interval")
+        plt.plot(range(initial_context_end_to_carry, initial_context_end_to_carry + num_median_predictions), median_predictions, color="tomato", label="Median forecast")
+        plt.fill_between(range(initial_context_end_to_carry, initial_context_end_to_carry + num_median_predictions), low_predictions, high_predictions, color="tomato", alpha=0.3, label="80% prediction interval")
         plt.legend()
         plt.grid()
         plt.show()
@@ -114,25 +124,22 @@ def predict(model: str,
         new_context_range = (context_start_index + prediction_length, context_end_index + prediction_length)
         # recurse
         print("RECURSING: Autoregressions left:", autoregressions - 1)
-        return predict(model, input_data, initial_context_end, new_context_range, prediction_length, autoregressions - 1, median_predictions, low_predictions, high_predictions)
+        return chronos_predict(
+          input_data,
+          new_context_range,
+          prediction_length,
+          autoregressions - 1,
+          median_predictions,
+          low_predictions,
+          high_predictions,
+          initial_context_end_to_carry)
 
-
-
-
-
-if __name__ == "__main__":
-  print(
-    """
-┏┳┓┏┓  ┏┓               
- ┃ ┗┓  ┣ ┏┓┏┓┏┓┏┏┓┏╋┏┓┏┓
- ┻ ┗┛  ┻ ┗┛┛ ┗ ┗┗┻┛┗┗ ┛ 
-                        """
-  )
-
-  # Test the function
-  passengers_data_table = df = pd.read_csv("https://raw.githubusercontent.com/AileenNielsen/TimeSeriesAnalysisWithPython/master/data/AirPassengers.csv")
-  passengers_column = passengers_data_table["#Passengers"]
-  length_passengers_data = len(passengers_column)
-  context_range = (0, length_passengers_data * 3 // 4)
-  prediction_length = 12
-  predict("Chronos", passengers_column, context_range[-1], context_range, prediction_length,autoregressions=2)
+# def chronos_predict(input_data: [float],
+#             context_range: [int],
+#             prediction_length: int,
+#             autoregressions: int = 0,
+#             median_predictions: [float] = pd.Series([]),
+#             low_predictions: [float] = pd.Series([]),
+#             high_predictions: [float] = pd.Series([]),
+#             initial_context_end: int = None
+# ):
