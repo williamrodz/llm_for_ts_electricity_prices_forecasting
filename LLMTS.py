@@ -49,6 +49,7 @@ def chronos_predict(input_data: [float],
             median_predictions: [float] = pd.Series([]),
             low_predictions: [float] = pd.Series([]),
             high_predictions: [float] = pd.Series([]),
+            initial_context_start: int = None,
             initial_context_end: int = None
 ):
 
@@ -57,18 +58,20 @@ def chronos_predict(input_data: [float],
     print("Parameters are:")
     print(f"""
     input_data: {len(input_data)}\n
-    initial_context_end: {initial_context_end}\n
     context_range: {context_range}\n
     prediction_length: {prediction_length}\n
     autoregressions: {(autoregressions)}\n
     median_predictions: {len(median_predictions)}\n
     low_predictions: {len(low_predictions)}\n
-    high_predictions: {len(high_predictions)}""")
+    high_predictions: {len(high_predictions)}\n
+    initial_context_start: {initial_context_start}\n
+    initial_context_end: {initial_context_end}\n
+
+    """)
     print("----------")
     print("")
     
     # Determine size of input time series
-    print("Predicting time series")
     n = len(input_data)
     (context_start_index, context_end_index) = context_range
 
@@ -99,6 +102,7 @@ def chronos_predict(input_data: [float],
     low_predictions = pd.concat([low_predictions,pd.Series(low)])
     high_predictions = pd.concat([high_predictions,pd.Series(high)])   
 
+    initial_context_start_to_carry = context_range[0] if initial_context_start is None else initial_context_start
     initial_context_end_to_carry = context_range[-1] if initial_context_end is None else initial_context_end
 
     if autoregressions == 0:
@@ -109,7 +113,9 @@ def chronos_predict(input_data: [float],
         
 
         plt.figure(figsize=(8, 4))
-        plt.plot(range(n), input_data[:n], color="royalblue", label="Input data")
+        plt.plot(range(initial_context_start_to_carry), input_data[:initial_context_start_to_carry], color="royalblue", label="Reference data")
+        plt.plot(range(initial_context_start_to_carry, initial_context_end_to_carry,), input_data[initial_context_start_to_carry:initial_context_end_to_carry], color="green", label="Context data")
+        plt.plot(range(initial_context_end_to_carry,n), input_data[initial_context_end_to_carry:], color="royalblue", label="Reference data")
         plt.plot(range(initial_context_end_to_carry, initial_context_end_to_carry + num_median_predictions), median_predictions, color="tomato", label="Median forecast")
         plt.fill_between(range(initial_context_end_to_carry, initial_context_end_to_carry + num_median_predictions), low_predictions, high_predictions, color="tomato", alpha=0.3, label="80% prediction interval")
         plt.legend()
@@ -132,6 +138,7 @@ def chronos_predict(input_data: [float],
           median_predictions,
           low_predictions,
           high_predictions,
+          initial_context_start_to_carry,
           initial_context_end_to_carry)
 
 # def chronos_predict(input_data: [float],
