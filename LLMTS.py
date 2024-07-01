@@ -37,11 +37,12 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
-pipeline = ChronosPipeline.from_pretrained(
-    "amazon/chronos-t5-small",
-    device_map="cpu",  # use "cpu" for CPU inference and "mps" for Apple Silicon
-    torch_dtype=torch.bfloat16,
-)
+
+ON_MAC = True
+DEVICE_MAP = "mps" if ON_MAC else "cuda"
+
+# use "cpu" for CPU inference and "mps" for Apple Silicon
+
 def chronos_predict(input_data: [float],
             context_range: [int],
             prediction_length: int,
@@ -52,6 +53,11 @@ def chronos_predict(input_data: [float],
             initial_context_start: int = None,
             initial_context_end: int = None
 ):
+    pipeline = ChronosPipeline.from_pretrained(
+        "amazon/chronos-t5-small",
+        device_map=DEVICE_MAP,  
+        torch_dtype=torch.bfloat16,
+    )
 
 
     print(" -------- PREDICT RUN ---------")
@@ -81,11 +87,12 @@ def chronos_predict(input_data: [float],
         raise ValueError("Invalid context range")
 
     # Convert data to tensor
-    context_slice = input_data[context_start_index:context_end_index]
     # print ("context_slice", type(context_slice), context_slice)
 
-    extended_slice_by_predictions = pd.concat([context_slice, median_predictions])
-    context_data_tensor = torch.tensor(extended_slice_by_predictions.tolist(), dtype=torch.float32)
+    extended_slice_by_predictions = pd.concat([input_data, median_predictions])
+    context_slice = extended_slice_by_predictions[context_start_index:context_end_index]
+
+    context_data_tensor = torch.tensor(context_slice.tolist(), dtype=torch.float32)
 
     # Predict time series
     forecast = pipeline.predict(
