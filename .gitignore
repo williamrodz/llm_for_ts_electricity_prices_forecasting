@@ -38,4 +38,7 @@ pip-log.txt
 ​⬤
 #Misc
 .DS_Store
-*.pyc
+__pycache__/*.pyc
+
+# Excel Cache
+~$*
