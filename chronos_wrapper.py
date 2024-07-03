@@ -39,7 +39,9 @@ import matplotlib.pyplot as plt
 
 
 ON_MAC = True
-DEVICE_MAP = "mps" if ON_MAC else "cuda"
+MPS_COMPATIBLE = False
+DEVICE_MAP = "cpu" # cuda, mps, cpu
+
 
 # use "cpu" for CPU inference and "mps" for Apple Silicon
 
@@ -129,7 +131,7 @@ def chronos_predict(input_data: [float],
         plt.grid()
         plt.show()
 
-        print("CONVERGED: Reached base case")
+        # print("CONVERGED: Reached base case")
         return median_predictions
 
     elif autoregressions >= 1:

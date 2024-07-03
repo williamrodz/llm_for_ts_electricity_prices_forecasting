@@ -1,5 +1,5 @@
 import pandas as pd
-from LLMTS import chronos_predict
+from chronos_wrapper import chronos_predict
 import matplotlib.pyplot as plt
 
 
