@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+from chronos_wrapper import chronos_predict
+from sarima_wrapper import sarima_predict
 
 def calculate_mse(actual_values, predicted_values):
   cum_sum = 0
@@ -39,6 +41,37 @@ def find_first_occurrence_index(df, date_string, date_column):
         return df.index[mask][0]
     else:
         return -1
-        
+
+
+def compare_chronos_to_sarima(df,column,context_start,context_finish, prediction_length):
+  sarima_predictions = sarima_predict(
+    df,
+    'Daily average',
+    context_start,
+    context_finish,
+    prediction_length
+    )
+  chronos_predictions = chronos_predict(
+            df,
+            'Daily average',
+            [context_start,context_finish],
+            prediction_length
+            )
+
+  # Forecast
+
+  forecast_start_index = find_first_occurrence_index(df, context_finish, "Date") + 1
+  forecast_end_index = forecast_start_index + prediction_length
+
+  actual_values = df[forecast_start_index:forecast_end_index][column]
+
+  if not len(actual_values) == len(sarima_predictions) == len(chronos_predictions):
+    print("Unequal lengths of comparison values and predictions")
+  
+  sarima_mse = calculate_mse(actual_values, sarima_predictions)
+  chronos_mse = calculate_mse(actual_values, chronos_predictions)
+  print("--- RESULTS --- ")
+  print (f"sarima_mse {sarima_mse}")
+  print (f"chronos_mse {chronos_mse}")
 
   
