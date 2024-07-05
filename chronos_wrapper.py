@@ -137,6 +137,7 @@ def chronos_predict(
         # print("input_data[column][:initial_context_start_to_carry],")
         print(input_data[column][:initial_context_start_to_carry],)
         plt.figure(figsize=(8, 4))
+        plt.title("Chronos Forecast")
         plt.plot(range(initial_context_start_to_carry), input_data[column][:initial_context_start_to_carry], color="royalblue", label="Reference data")
         plt.plot(range(initial_context_start_to_carry, initial_context_end_to_carry,), input_data[column][initial_context_start_to_carry:initial_context_end_to_carry], color="green", label="Context data")
         plt.plot(range(initial_context_end_to_carry,n), input_data[column][initial_context_end_to_carry:], color="royalblue", label="Reference data")
