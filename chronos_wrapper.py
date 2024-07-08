@@ -87,8 +87,8 @@ def chronos_predict(
     n = len(input_data)
     (context_start_index, context_end_index) = context_range
 
-    print("Data")
-    print(input_data)
+    # print("Data")
+    # print(input_data)
     if type(context_start_index) == str:
       # convert dates to index
       mask = (input_data[DATE_COLUMN] >= context_start_index) & (input_data[DATE_COLUMN] <= context_end_index)
@@ -135,7 +135,7 @@ def chronos_predict(
         num_median_predictions = len(median_predictions)
         
         # print("input_data[column][:initial_context_start_to_carry],")
-        print(input_data[column][:initial_context_start_to_carry],)
+        # print(input_data[column][:initial_context_start_to_carry],)
         plt.figure(figsize=(8, 4))
         plt.title("Chronos Forecast")
         plt.plot(range(initial_context_start_to_carry), input_data[column][:initial_context_start_to_carry], color="royalblue", label="Reference data")

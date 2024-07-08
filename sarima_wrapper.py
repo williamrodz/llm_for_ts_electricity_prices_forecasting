@@ -58,8 +58,6 @@ def sarima_predict(df, column, training_start_index,training_end_index, predicti
 
   sarima_forecast = model_fit.forecast(steps=prediction_length)
 
-
-
   # Plot the original data and the forecast
   plt.figure(figsize=(8, 4))
   plt.title("S-ARIMA Forecast")

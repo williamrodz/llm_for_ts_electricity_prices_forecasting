@@ -74,4 +74,20 @@ def compare_chronos_to_sarima(df,column,context_start,context_finish, prediction
   print (f"sarima_mse {sarima_mse}")
   print (f"chronos_mse {chronos_mse}")
 
-  
+
+def get_sub_df_from_index(df, start_index, end_index):
+  output_df = None
+  if type(start_index) == str:
+    # convert dates to index
+    mask = (df[DATE_COLUMN] >= start_index) & (df[DATE_COLUMN] <= end_index)
+    output_df = df.loc[mask]
+    start_index = find_first_occurrence_index(df, start_index,DATE_COLUMN)
+    end_index = find_first_occurrence_index(df, end_index,DATE_COLUMN)
+    # forecast_index = range(end_index + 1,end_index + 1 + prediction_length)
+  elif not start_index is None and not end_index is None:
+    output_df = df[start_index:end_index]
+    # forecast_index = df.index[end_index:end_index + prediction_length]
+  else:
+    raise ValueError(f'start_index is {type(start_index)}. Must be int or str.')
+
+  return output_df
