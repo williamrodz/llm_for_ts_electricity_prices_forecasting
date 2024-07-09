@@ -30,7 +30,7 @@ def test_on_passengers():
 
   # Test on Mackey-Glass time series
 def test_on_mackey_glass():
-  mackey_ts = pd.read_csv("mackey_glass_time_series.csv")
+  mackey_ts = pd.read_csv("data/mackey_glass_time_series.csv")
   # processed_series = preprocess_series(mackey_ts['Value'][3000:6000])
 
   # Graph the time series

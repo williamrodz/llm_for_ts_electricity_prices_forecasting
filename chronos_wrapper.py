@@ -8,7 +8,6 @@ import statsmodels.api as sm
 import pmdarima as pm
 import utils
 
-
 CHRONOS_NUM_SAMPLES_DEFAULT = 20
 DATE_COLUMN = 'Date'
 
@@ -66,22 +65,22 @@ def chronos_predict(
     )
 
 
-    print(" -------- PREDICT RUN ---------")
-    print("Parameters are:")
-    print(f"""
-    input_data: {len(input_data)}\n
-    context_range: {context_range}\n
-    prediction_length: {prediction_length}\n
-    autoregressions: {(autoregressions)}\n
-    median_predictions: {len(median_predictions)}\n
-    low_predictions: {len(low_predictions)}\n
-    high_predictions: {len(high_predictions)}\n
-    initial_context_start: {initial_context_start}\n
-    initial_context_end: {initial_context_end}\n
+    # print(" -------- PREDICT RUN ---------")
+    # print("Parameters are:")
+    # print(f"""
+    # input_data: {len(input_data)}\n
+    # context_range: {context_range}\n
+    # prediction_length: {prediction_length}\n
+    # autoregressions: {(autoregressions)}\n
+    # median_predictions: {len(median_predictions)}\n
+    # low_predictions: {len(low_predictions)}\n
+    # high_predictions: {len(high_predictions)}\n
+    # initial_context_start: {initial_context_start}\n
+    # initial_context_end: {initial_context_end}\n
 
-    """)
-    print("----------")
-    print("")
+    # """)
+    # print("----------")
+    # print("")
     
     # Determine size of input time series
     n = len(input_data)

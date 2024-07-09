@@ -64,7 +64,7 @@ def sarima_predict(df, column, training_start_index,training_end_index, predicti
   plt.plot(df[column][: training_start_index], color="royalblue", label="historical data")
   plt.plot(df[column][training_start_index: training_end_index], color="green", label="historical data")
   plt.plot(forecast_index, sarima_forecast, color="tomato", label="median forecast")
-  plt.plot(df[column][forecast_index[-1]:], color="royalblue", label="historical data")
+  plt.plot(df[column][forecast_index[0]:], color="royalblue", label="historical data")
   plt.legend()
   plt.show()
 

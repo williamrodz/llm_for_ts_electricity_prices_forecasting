@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 from chronos_wrapper import chronos_predict
 from sarima_wrapper import sarima_predict
+from gp_wrapper import gp_predict
+
+DATE_COLUMN = "Date"
 
 def calculate_mse(actual_values, predicted_values):
   cum_sum = 0
@@ -43,7 +46,7 @@ def find_first_occurrence_index(df, date_string, date_column):
         return -1
 
 
-def compare_chronos_to_sarima(df,column,context_start,context_finish, prediction_length):
+def compare_prediction_methods(df,column,context_start,context_finish, prediction_length):
   sarima_predictions = sarima_predict(
     df,
     'Daily average',
@@ -58,6 +61,9 @@ def compare_chronos_to_sarima(df,column,context_start,context_finish, prediction
             prediction_length
             )
 
+  gp_predictions = gp_predict(df,'Daily average', context_start, context_finish, prediction_length)
+
+
   # Forecast
 
   forecast_start_index = find_first_occurrence_index(df, context_finish, "Date") + 1
@@ -70,9 +76,15 @@ def compare_chronos_to_sarima(df,column,context_start,context_finish, prediction
   
   sarima_mse = calculate_mse(actual_values, sarima_predictions)
   chronos_mse = calculate_mse(actual_values, chronos_predictions)
+  gp_mse = calculate_mse(actual_values, gp_predictions)
   print("--- RESULTS --- ")
-  print (f"sarima_mse {sarima_mse}")
-  print (f"chronos_mse {chronos_mse}")
+  print(" Using Mean Squared Error (MSE) as performance metric")
+  print(" MSE = (1/n) * sum((y_true - y_pred)^2) ")
+  print("-----------------")
+  print(f"sarima_mse    {sarima_mse}")
+  print(f"chronos_mse   {chronos_mse}")
+  print(f"gp_mse        {gp_mse}")
+  print("-----------------")
 
 
 def get_sub_df_from_index(df, start_index, end_index):
