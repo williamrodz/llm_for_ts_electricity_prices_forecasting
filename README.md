@@ -7,7 +7,6 @@ This repository contains scripts for analyzing time series energy data using a l
 ### requirements.txt 
 This is an auto-generated file that lists all python package requirements for running the code in this project.
 
-
 ### chronos_wrapper.py
 This file contains the code for using the Chronos language model for predicting TS data. 
 

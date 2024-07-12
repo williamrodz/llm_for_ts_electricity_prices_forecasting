@@ -4,15 +4,22 @@ from chronos_wrapper import chronos_predict
 from sarima_wrapper import sarima_predict
 from gp_wrapper import gp_predict
 
-DATE_COLUMN = "Date"
+DATE_COLUMN = "Date"  
 
-def calculate_mse(actual_values, predicted_values):
+def calculate_mse(actual_values, predicted_values,normalized=False):
   cum_sum = 0
   n = len(predicted_values)
   for (actual,expected) in zip(actual_values,predicted_values):
     error = (expected - actual) ** 2
     cum_sum += error
-  return cum_sum / n
+  
+  mse = cum_sum / n
+  if normalized:
+    # obtain variance of predicted values
+    variance = np.var(predicted_values)
+    return mse / variance
+  else:
+    return mse / n
 
 def calculate_rmse(actual_values, predicted_values):
   return sqrt(calculate_mse(actual_values, predicted_values))
@@ -77,6 +84,10 @@ def compare_prediction_methods(df,column,context_start,context_finish, predictio
   sarima_mse = calculate_mse(actual_values, sarima_predictions)
   chronos_mse = calculate_mse(actual_values, chronos_predictions)
   gp_mse = calculate_mse(actual_values, gp_predictions)
+
+  nmse_sarima = calculate_mse(actual_values, sarima_predictions,normalized=True)
+  nmse_chronos = calculate_mse(actual_values, chronos_predictions,normalized=True)
+  nmse_gp = calculate_mse(actual_values, gp_predictions,normalized=True)
   print("--- RESULTS --- ")
   print(" Using Mean Squared Error (MSE) as performance metric")
   print(" MSE = (1/n) * sum((y_true - y_pred)^2) ")
@@ -84,6 +95,13 @@ def compare_prediction_methods(df,column,context_start,context_finish, predictio
   print(f"sarima_mse    {sarima_mse}")
   print(f"chronos_mse   {chronos_mse}")
   print(f"gp_mse        {gp_mse}")
+  print("-----------------")
+  print("Using Normalized Mean Squared Error (NMSE) as performance metric")
+  print(" NMSE = MSE / variance(y_pred)")
+  print("-----------------")
+  print(f"nmse_sarima   {nmse_sarima}")
+  print(f"nmse_chronos  {nmse_chronos}")
+  print(f"nmse_gp       {nmse_gp}")
   print("-----------------")
 
 
