@@ -3,8 +3,17 @@ from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, Exp
 import utils 
 import numpy as np
 import matplotlib.pyplot as plt
+from constants import *
 
 def gp_predict(df, column, training_start_index, training_end_index, prediction_length,plot=True):
+  # Check for string date
+  if isinstance(training_start_index, str) and isinstance(training_end_index, str):
+    training_start_index = utils.find_first_occurrence_index(df, training_start_index,DATE_COLUMN)
+    training_end_index = utils.find_first_occurrence_index(df, training_end_index,DATE_COLUMN)
+  elif isinstance(training_start_index, str) or isinstance(training_end_index, str):
+    raise ValueError("Both training_start_index and training_end_index must be strings or integers")
+
+
   # Extract the data
   training_df = utils.get_sub_df_from_index(df, training_start_index, training_end_index)
 
@@ -16,19 +25,12 @@ def gp_predict(df, column, training_start_index, training_end_index, prediction_
 
   x_train = np.array(range(len(training_df))).reshape(-1, 1)
 
-  # print("x_train")
-  # print(x_train)
-  # print("training_df[column]")
-  # print(training_df[column])
-
   # Fit to the training data
   gp.fit(x_train, training_df[column])
 
-  training_start_index = utils.find_first_occurrence_index(df, training_start_index,DATE_COLUMN)
-  training_end_index = utils.find_first_occurrence_index(df, training_end_index,DATE_COLUMN)
-
   # Make predictions
   forecast_index = df.index[training_end_index:training_end_index + prediction_length]
+
   y_pred, sigma = gp.predict(forecast_index.to_numpy().reshape(-1, 1), return_std=True)
 
   # print("y_pred")

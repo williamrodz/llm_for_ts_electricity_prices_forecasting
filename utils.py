@@ -165,9 +165,9 @@ def sliding_window_analysis_for_algorithm(algo, df,column,context_length, predic
     device_map=DEVICE_MAP,  
     torch_dtype=torch.bfloat16,
     )
-  welcome_message = "- - - - - - - - -- - - - - - - - - - - - - - - "
+  welcome_message = "- - - - - - - - -- - - - - - - - - - - - - - - \n"
   welcome_message += f"Starting sliding window analysis for {algo}\n"
-  welcome_message += ("Note: This may take a while especially with a smaller context window and longer dataset.")
+  welcome_message += ("Note: This may take a while especially with a smaller context window and longer dataset.\n")
   welcome_message += (f"- Algorithm:                {algo}\n")
   welcome_message += (f"- Context length:           {context_length}\n")
   welcome_message += (f"- Prediction length:        {prediction_length}\n")
@@ -233,7 +233,7 @@ def sliding_window_analysis_for_algorithm(algo, df,column,context_length, predic
   
   # Save results to a text file
   timestamp = pd.Timestamp.now()
-  file_name = f"{RESULTS_FOLDER_NAME}/{algo}_results_{timestamp}.txt"
+  file_name = f"{RESULTS_FOLDER_NAME}/{algo}/{algo}_results_{timestamp}.txt"
   save_dict_to_json(algo_results, file_name)
 
   return algo_results
