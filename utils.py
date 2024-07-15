@@ -1,10 +1,29 @@
 import pandas as pd
 import numpy as np
+import torch
+from chronos import ChronosPipeline
 from chronos_wrapper import chronos_predict
 from sarima_wrapper import sarima_predict
 from gp_wrapper import gp_predict
+from tqdm import tqdm
+from constants import *
+import json
 
-DATE_COLUMN = "Date"  
+# Custom JSON Encoder
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NumpyEncoder, self).default(obj)
+
+# Function to save dictionary as a JSON file
+def save_dict_to_json(dictionary, file_path):
+    with open(file_path, 'w') as json_file:
+        json.dump(dictionary, json_file, indent=4, cls=NumpyEncoder)
 
 def calculate_mse(actual_values, predicted_values,normalized=False):
   cum_sum = 0
@@ -52,23 +71,192 @@ def find_first_occurrence_index(df, date_string, date_column):
     else:
         return -1
 
+def plot_error_comparison(results):
+  # Extract the values and keys
+  keys = list(results.keys())
+  values = list(results.values())
 
-def compare_prediction_methods(df,column,context_start,context_finish, prediction_length):
+  # Normalize the values for color mapping
+  norm = plt.Normalize(min(values), max(values))
+  colors = plt.cm.RdYlGn_r(norm(values))
+
+  # Create a horizontal bar plot
+  plt.figure(figsize=(10, 6))
+  bars = plt.barh(keys, values, color=colors)
+
+  # Add color bar for reference
+  sm = plt.cm.ScalarMappable(cmap="RdYlGn_r", norm=norm)
+  sm.set_array([])
+  plt.colorbar(sm, orientation='vertical', label='Error Value')
+
+  # Add values at the end of the bars
+  for bar in bars:
+      plt.text(bar.get_width() + 0.01, bar.get_y() + bar.get_height() / 2,
+              f'{bar.get_width():.2f}', va='center')
+
+  plt.xlabel('Error Value')
+  plt.title('Error Values for Different Models')
+  plt.gca().invert_yaxis()  # Highest value at the top
+  plt.show()
+
+def sliding_window_analysis(df,column,context_length,prediction_length):
+  # |S---F---P---|
+  cum_sum_mse_sarima = 0
+  cum_sum_mse_chronos = 0
+  cum_sum_mse_gp = 0
+  
+  cum_sum_nmse_sarima = 0
+  cum_sum_nmse_chronos = 0
+  cum_sum_nmse_gp = 0
+
+  fail_count = 0
+  # Loop with tqdm progress bar
+
+  num_possible_iterations = len(df) - context_length - prediction_length
+  print("Starting sliding window analysis")
+  print("Note: This may take a while especially with a smaller context window and longer dataset.")
+  print(f"- Algorithm:                SARIMA, Chronos, GP")
+  print(f"- Context length:           {context_length}")
+  print(f"- Prediction length:        {prediction_length}")
+  print(f"- # of Possible iterations: {num_possible_iterations}")
+  print("")
+
+  for i in tqdm(range(0, len(df) - context_length - prediction_length)):
+      print(f"\nITERATION {i} of {len(df) - context_length - prediction_length}\n\n")
+      context_start = i
+      context_finish = i + context_length
+      try:
+          results = compare_prediction_methods(df, column, context_start, context_finish, prediction_length, plot=False)
+        
+          cum_sum_mse_sarima += results['mse_sarima']
+          cum_sum_mse_chronos += results['mse_chronos']
+          cum_sum_mse_gp += results['mse_gp']
+
+          cum_sum_nmse_sarima += results['nmse_sarima']
+          cum_sum_nmse_chronos += results['nmse_chronos']
+          cum_sum_nmse_gp += results['nmse_gp']
+      except Exception as e:
+          fail_count += 1
+          print(f"Iteration {i} failed with error: {e}")
+      
+  print(f"Number of failed iterations: {fail_count}")
+  
+  results = {
+    'cum_sum_mse_sarima':cum_sum_mse_sarima,
+    'cum_sum_mse_chronos':cum_sum_mse_chronos,
+    'cum_sum_mse_gp':cum_sum_mse_gp,
+    'cum_sum_nmse_sarima':cum_sum_nmse_sarima,
+    'cum_sum_nmse_chronos':cum_sum_nmse_chronos,
+    'cum_sum_nmse_gp':cum_sum_nmse_gp
+  }
+  # Plot final errors
+  plot_error_comparison(results)
+  return results
+
+def sliding_window_analysis_for_algorithm(algo, df,column,context_length, prediction_length,plot=False):
+  num_possible_iterations = len(df) - context_length - prediction_length
+  cum_mse = 0
+  cum_nmse = 0
+
+  if algo == "chronos":
+    #initialize chronos pipeline
+    pipeline = ChronosPipeline.from_pretrained(
+    "amazon/chronos-t5-small",
+    device_map=DEVICE_MAP,  
+    torch_dtype=torch.bfloat16,
+    )
+  welcome_message = "- - - - - - - - -- - - - - - - - - - - - - - - "
+  welcome_message += f"Starting sliding window analysis for {algo}\n"
+  welcome_message += ("Note: This may take a while especially with a smaller context window and longer dataset.")
+  welcome_message += (f"- Algorithm:                {algo}\n")
+  welcome_message += (f"- Context length:           {context_length}\n")
+  welcome_message += (f"- Prediction length:        {prediction_length}\n")
+  welcome_message += (f"- Dataset length:           {len(df)}\n")
+  welcome_message += (f"- # of possible iterations: {num_possible_iterations}\n")
+  print(welcome_message)
+
+  num_successful_runs = 0 
+  for i in tqdm(range(0, len(df) - context_length - prediction_length)):
+      context_start = i
+      context_finish = i + context_length
+
+      # Obtain predictions
+      algo_predictions = None
+ 
+      if algo == "chronos":
+        algo_predictions = chronos_predict(
+          df,
+          column,
+          context_start,context_finish,
+          prediction_length,
+          plot=plot,
+          pipeline=pipeline
+          )
+
+      elif algo == "sarima":
+        algo_predictions = sarima_predict(df,column,context_start, context_finish,prediction_length,plot=plot)
+      elif algo == "gp":
+          algo_predictions = gp_predict(df,column, context_start, context_finish, prediction_length, plot=plot)
+      else:
+        raise ValueError(f"Invalid algorithm {algo}")
+      
+      # Obtain Actual Values
+      forecast_start_index = find_first_occurrence_index(df, context_finish, "Date") + 1
+      forecast_end_index = forecast_start_index + prediction_length
+      n_predictions = len(algo_predictions)
+
+      actual_values = df[forecast_start_index:forecast_end_index][column]
+      n_actual_values = len(actual_values)
+
+      if not n_actual_values == n_predictions:
+        raise ValueError(f"Unequal lengths {n_actual_values} != {n_predictions}")
+      
+      cum_mse += calculate_mse(actual_values, algo_predictions)
+      cum_nmse += calculate_mse(actual_values, algo_predictions,normalized=True)
+      num_successful_runs += 1
+
+  # Save results in a txt file
+  algo_results = {
+    "algorithm":algo,
+    "context_length":context_length,
+    "prediction_length":prediction_length,
+    "dataset_length":len(df),
+    "cum_mse":cum_mse,
+    "cum_nmse":cum_nmse,
+    "num_successful_runs":num_successful_runs,
+    "num_possible_iterations":num_possible_iterations}
+  output_message = f"\nResults for {algo}:\n"
+
+  for key,value in algo_results.items():
+    output_message += (f"- {key}: {value}\n")
+  print(output_message)
+  
+  # Save results to a text file
+  timestamp = pd.Timestamp.now()
+  file_name = f"{RESULTS_FOLDER_NAME}/{algo}_results_{timestamp}.txt"
+  save_dict_to_json(algo_results, file_name)
+
+  return algo_results
+  
+
+def compare_prediction_methods(df,column,context_start,context_finish, prediction_length,plot=True):
   sarima_predictions = sarima_predict(
     df,
-    'Daily average',
+    column,
     context_start,
     context_finish,
-    prediction_length
+    prediction_length,
+    plot=plot
     )
   chronos_predictions = chronos_predict(
             df,
-            'Daily average',
-            [context_start,context_finish],
-            prediction_length
+            column,
+            context_start,context_finish,
+            prediction_length,
+            plot=plot
             )
 
-  gp_predictions = gp_predict(df,'Daily average', context_start, context_finish, prediction_length)
+  gp_predictions = gp_predict(df,column, context_start, context_finish, prediction_length, plot=plot)
 
 
   # Forecast
@@ -81,28 +269,34 @@ def compare_prediction_methods(df,column,context_start,context_finish, predictio
   if not len(actual_values) == len(sarima_predictions) == len(chronos_predictions):
     print("Unequal lengths of comparison values and predictions")
   
-  sarima_mse = calculate_mse(actual_values, sarima_predictions)
-  chronos_mse = calculate_mse(actual_values, chronos_predictions)
-  gp_mse = calculate_mse(actual_values, gp_predictions)
+  mse_sarima = calculate_mse(actual_values, sarima_predictions)
+  mse_chronos = calculate_mse(actual_values, chronos_predictions)
+  mse_gp = calculate_mse(actual_values, gp_predictions)
 
   nmse_sarima = calculate_mse(actual_values, sarima_predictions,normalized=True)
   nmse_chronos = calculate_mse(actual_values, chronos_predictions,normalized=True)
   nmse_gp = calculate_mse(actual_values, gp_predictions,normalized=True)
-  print("--- RESULTS --- ")
-  print(" Using Mean Squared Error (MSE) as performance metric")
-  print(" MSE = (1/n) * sum((y_true - y_pred)^2) ")
-  print("-----------------")
-  print(f"sarima_mse    {sarima_mse}")
-  print(f"chronos_mse   {chronos_mse}")
-  print(f"gp_mse        {gp_mse}")
-  print("-----------------")
-  print("Using Normalized Mean Squared Error (NMSE) as performance metric")
-  print(" NMSE = MSE / variance(y_pred)")
-  print("-----------------")
-  print(f"nmse_sarima   {nmse_sarima}")
-  print(f"nmse_chronos  {nmse_chronos}")
-  print(f"nmse_gp       {nmse_gp}")
-  print("-----------------")
+  if plot:
+    print("MSE")
+    print(f"- Chronos: {mse_chronos}")
+    print(f"- SARIMA: {mse_sarima}")
+    print(f"- GP: {mse_gp}")
+    
+    print(f"NMSE")
+    print(f"- Chronos: {nmse_chronos}")
+    print(f"- SARIMA: {nmse_sarima}")
+    print(f"- GP: {nmse_gp}")
+  else:
+    results = {
+      'mse_sarima':mse_sarima,
+      'mse_chronos':mse_chronos,
+      'mse_gp':mse_gp,
+      'nmse_sarima':nmse_sarima,
+      'nmse_chronos':nmse_chronos,
+      'nmse_gp':nmse_gp
+    }
+
+  return results    
 
 
 def get_sub_df_from_index(df, start_index, end_index):

@@ -1,0 +1,11 @@
+Starting sliding window analysis for chronos
+Note: This may take a while especially with a smaller context window and longer dataset.- Algorithm:            chronos
+- Context length:       365
+- Prediction length:    64
+- Dataset length: 366
+- Number of iterations: -63
+
+Results for chronos:
+- algorithm: chronos
+- cum_mse: 0
+- cum_nmse: 0
