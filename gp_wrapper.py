@@ -13,7 +13,6 @@ def gp_predict(df, column, training_start_index, training_end_index, prediction_
   elif isinstance(training_start_index, str) or isinstance(training_end_index, str):
     raise ValueError("Both training_start_index and training_end_index must be strings or integers")
 
-
   # Extract the data
   training_df = utils.get_sub_df_from_index(df, training_start_index, training_end_index)
 

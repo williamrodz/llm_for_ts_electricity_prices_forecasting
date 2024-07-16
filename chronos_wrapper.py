@@ -10,9 +10,7 @@ import utils
 from constants import *
 
 
-
 """
-
 input: 
     model:
       Identifies the model for time series prediction 
@@ -32,19 +30,12 @@ output:
     
     Not returned, but printed:
       graph of the predicted values against 80% prediction interval
-
 """
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
-
-ON_MAC = True
-MPS_COMPATIBLE = False
-DEVICE_MAP = "cpu" # cuda, mps, cpu
-
-
-# use "cpu" for CPU inference and "mps" for Apple Silicon
+from constants import *
 
 def chronos_predict(
   input_data: [float],
@@ -84,14 +75,12 @@ def chronos_predict(
     # Determine size of input time series
     n = len(input_data)
 
-
     if type(context_start_index) == str:
       # convert dates to index
       mask = (input_data[DATE_COLUMN] >= context_start_index) & (input_data[DATE_COLUMN] <= context_end_index)
       training_df = input_data.loc[mask]
       context_start_index = utils.find_first_occurrence_index(input_data, context_start_index,DATE_COLUMN)
       context_end_index = utils.find_first_occurrence_index(input_data, context_end_index,DATE_COLUMN)    
-
 
     context_slice = input_data[column][context_start_index:context_end_index]
     context_data_tensor = torch.tensor(context_slice.tolist())

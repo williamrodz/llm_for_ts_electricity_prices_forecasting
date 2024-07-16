@@ -1,0 +1,10 @@
+{
+    "algorithm": "chronos",
+    "context_length": 365,
+    "prediction_length": 64,
+    "dataset_length": 1636,
+    "cum_mse": 1841.2562830642578,
+    "cum_nmse": 163068.93254369937,
+    "num_successful_runs": 1207,
+    "num_possible_iterations": 1207
+}

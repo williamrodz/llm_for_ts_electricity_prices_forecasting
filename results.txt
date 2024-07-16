@@ -1,5 +1,0 @@
-{
-  "algorithm": "chronos",
-  "cum_mse": 0,
-  "cum_nmse": 0
-}

@@ -1,0 +1,10 @@
+{
+    "algorithm": "gp",
+    "context_length": 365,
+    "prediction_length": 64,
+    "dataset_length": 1636,
+    "cum_mse": 671.3734729906549,
+    "cum_nmse": Infinity,
+    "num_successful_runs": 1207,
+    "num_possible_iterations": 1207
+}

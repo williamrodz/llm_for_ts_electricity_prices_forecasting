@@ -153,10 +153,12 @@ def sliding_window_analysis(df,column,context_length,prediction_length):
   plot_error_comparison(results)
   return results
 
-def sliding_window_analysis_for_algorithm(algo, df,column,context_length, prediction_length,plot=False):
+def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_length, prediction_length,plot=False):
   num_possible_iterations = len(df) - context_length - prediction_length
   cum_mse = 0
+  ledger_mse = []
   cum_nmse = 0
+  ledger_nmse = []
 
   if algo == "chronos":
     #initialize chronos pipeline
@@ -167,10 +169,11 @@ def sliding_window_analysis_for_algorithm(algo, df,column,context_length, predic
     )
   welcome_message = "- - - - - - - - -- - - - - - - - - - - - - - - \n"
   welcome_message += f"Starting sliding window analysis for {algo}\n"
-  welcome_message += ("Note: This may take a while especially with a smaller context window and longer dataset.\n")
+  welcome_message += ("Note: This will take more time with a smaller context window and longer dataset.\n")
   welcome_message += (f"- Algorithm:                {algo}\n")
   welcome_message += (f"- Context length:           {context_length}\n")
   welcome_message += (f"- Prediction length:        {prediction_length}\n")
+  welcome_message += (f"- Data Title:               {data_title}\n")
   welcome_message += (f"- Dataset length:           {len(df)}\n")
   welcome_message += (f"- # of possible iterations: {num_possible_iterations}\n")
   print(welcome_message)
@@ -211,8 +214,14 @@ def sliding_window_analysis_for_algorithm(algo, df,column,context_length, predic
       if not n_actual_values == n_predictions:
         raise ValueError(f"Unequal lengths {n_actual_values} != {n_predictions}")
       
-      cum_mse += calculate_mse(actual_values, algo_predictions)
-      cum_nmse += calculate_mse(actual_values, algo_predictions,normalized=True)
+      mse = calculate_mse(actual_values, algo_predictions)
+      cum_mse += mse
+      ledger_mse.append(mse)
+
+      nmse = calculate_mse(actual_values, algo_predictions,normalized=True)
+      cum_nmse += nmse
+      ledger_nmse.append(nmse)
+
       num_successful_runs += 1
 
   # Save results in a txt file
@@ -220,9 +229,12 @@ def sliding_window_analysis_for_algorithm(algo, df,column,context_length, predic
     "algorithm":algo,
     "context_length":context_length,
     "prediction_length":prediction_length,
+    "data_title":data_title,
     "dataset_length":len(df),
     "cum_mse":cum_mse,
     "cum_nmse":cum_nmse,
+    "ledger_mse":ledger_mse,
+    "ledger_nmse":ledger_nmse,
     "num_successful_runs":num_successful_runs,
     "num_possible_iterations":num_possible_iterations}
   output_message = f"\nResults for {algo}:\n"

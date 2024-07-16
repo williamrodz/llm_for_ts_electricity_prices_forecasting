@@ -9,7 +9,6 @@ import pmdarima as pm
 import utils
 from constants import *
 
-
 """
 
 input: 
@@ -36,14 +35,8 @@ output:
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+from constants import *
 
-
-ON_MAC = True
-MPS_COMPATIBLE = False
-DEVICE_MAP = "cpu" # cuda, mps, cpu
-
-
-# use "cpu" for CPU inference and "mps" for Apple Silicon
 
 def chronos_predict(
   input_data: [float],
