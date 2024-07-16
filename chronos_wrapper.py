@@ -105,8 +105,8 @@ def chronos_predict(
     if plot:
       plt.figure(figsize=(8, 4))
       plt.title("Chronos Forecast")
-      plt.plot(range(context_start_index), input_data[column][:initial_context_start_to_carry], color="royalblue", label="Reference data")
-      plt.plot(range(context_start_index, context_end_index,), input_data[column][initial_context_start_to_carry:initial_context_end_to_carry], color="green", label="Context data")
+      plt.plot(range(context_start_index), input_data[column][:context_start_index], color="royalblue", label="Reference data")
+      plt.plot(range(context_start_index, context_end_index,), input_data[column][context_start_index:context_end_index], color="green", label="Context data")
       plt.plot(range(context_end_index,n), input_data[column][context_end_index:], color="royalblue", label="Reference data")
       plt.plot(range(context_end_index, context_end_index + num_median_predictions), median_predictions, color="tomato", label="Median forecast")
       plt.fill_between(range(context_end_index, context_end_index + num_median_predictions), low_predictions, high_predictions, color="tomato", alpha=0.3, label="80% prediction interval")

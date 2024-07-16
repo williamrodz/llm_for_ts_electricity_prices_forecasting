@@ -45,9 +45,9 @@ def gp_predict(df, column, training_start_index, training_end_index, prediction_
     plt.figure(figsize=(8, 4))
     plt.title("GP Forecast")
     plt.plot(df[column][: training_start_index], color="royalblue", label="historical data")
-    plt.plot(df[column][training_start_index: training_end_index], color="green", label="historical data")
-    plt.plot(forecast_index, y_pred, color="tomato", label="median forecast")
+    plt.plot(df[column][training_start_index: training_end_index], color="green", label="context")
     plt.plot(df[column][forecast_index[0]:], color="royalblue", label="historical data")
+    plt.plot(forecast_index, y_pred, color="tomato", label="median forecast")
     plt.legend()
     plt.show()
 

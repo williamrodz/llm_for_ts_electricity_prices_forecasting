@@ -8,6 +8,9 @@ from gp_wrapper import gp_predict
 from tqdm import tqdm
 from constants import *
 import json
+import time
+import os
+
 
 # Custom JSON Encoder
 class NumpyEncoder(json.JSONEncoder):
@@ -35,8 +38,8 @@ def calculate_mse(actual_values, predicted_values,normalized=False):
   mse = cum_sum / n
   if normalized:
     # obtain variance of predicted values
-    variance = np.var(predicted_values)
-    return mse / variance
+    variance_of_actual_values = np.var(actual_values)
+    return mse / variance_of_actual_values
   else:
     return mse / n
 
@@ -160,13 +163,22 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   cum_nmse = 0
   ledger_nmse = []
 
-  if algo == "chronos":
-    #initialize chronos pipeline
-    pipeline = ChronosPipeline.from_pretrained(
-    "amazon/chronos-t5-small",
-    device_map=DEVICE_MAP,  
-    torch_dtype=torch.bfloat16,
-    )
+  if algo.startswith("chronos_"):
+    # Extract the part after "chronos_"
+    suffix = algo[len("chronos_"):]
+    
+    # Define the valid sizes
+    valid_chronos_sizes = {"tiny", "mini", "small", "base", "large"}
+    
+    if suffix in valid_chronos_sizes:
+      #initialize chronos pipeline
+      pipeline = ChronosPipeline.from_pretrained(
+      f"amazon/chronos-t5-{suffix}",
+      device_map=DEVICE_MAP,  
+      torch_dtype=torch.bfloat16,
+      )
+    else:
+      raise ValueError(f"Invalid Chronos model size: {suffix}. Valid sizes are: {valid_chronos_sizes}")
   welcome_message = "- - - - - - - - -- - - - - - - - - - - - - - - \n"
   welcome_message += f"Starting sliding window analysis for {algo}\n"
   welcome_message += ("Note: This will take more time with a smaller context window and longer dataset.\n")
@@ -179,6 +191,8 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   print(welcome_message)
 
   num_successful_runs = 0 
+  start_time = time.time()
+
   for i in tqdm(range(0, len(df) - context_length - prediction_length)):
       context_start = i
       context_finish = i + context_length
@@ -186,7 +200,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
       # Obtain predictions
       algo_predictions = None
  
-      if algo == "chronos":
+      if algo.startswith("chronos_"):
         algo_predictions = chronos_predict(
           df,
           column,
@@ -223,6 +237,13 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
       ledger_nmse.append(nmse)
 
       num_successful_runs += 1
+  end_time = time.time()
+
+  # Calculate elapsed time in seconds
+  elapsed_seconds = end_time - start_time
+
+  # Convert elapsed time to hours
+  elapsed_hours = elapsed_seconds / 3600
 
   # Save results in a txt file
   algo_results = {
@@ -231,21 +252,28 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
     "prediction_length":prediction_length,
     "data_title":data_title,
     "dataset_length":len(df),
+    "elapsed_seconds":elapsed_seconds,
+    "elapsed_hours":elapsed_hours,
     "cum_mse":cum_mse,
     "cum_nmse":cum_nmse,
-    "ledger_mse":ledger_mse,
-    "ledger_nmse":ledger_nmse,
     "num_successful_runs":num_successful_runs,
-    "num_possible_iterations":num_possible_iterations}
+    "num_possible_iterations":num_possible_iterations,
+    "ledger_mse":ledger_mse,
+    "ledger_nmse":ledger_nmse,    
+    }
   output_message = f"\nResults for {algo}:\n"
 
   for key,value in algo_results.items():
+    if key == "ledger_mse" or key == "ledger_nmse":
+      continue
     output_message += (f"- {key}: {value}\n")
   print(output_message)
   
   # Save results to a text file
   timestamp = pd.Timestamp.now()
-  file_name = f"{RESULTS_FOLDER_NAME}/{algo}/{algo}_results_{timestamp}.txt"
+  # Create the directory if it doesn't exist
+  os.makedirs(f"{RESULTS_FOLDER_NAME}/{algo}", exist_ok=True)  
+  file_name = f"{RESULTS_FOLDER_NAME}/{algo}/{algo}-context_length-{context_length}-data_title{data_title}-{timestamp}.txt"
   save_dict_to_json(algo_results, file_name)
 
   return algo_results
@@ -288,6 +316,15 @@ def compare_prediction_methods(df,column,context_start,context_finish, predictio
   nmse_sarima = calculate_mse(actual_values, sarima_predictions,normalized=True)
   nmse_chronos = calculate_mse(actual_values, chronos_predictions,normalized=True)
   nmse_gp = calculate_mse(actual_values, gp_predictions,normalized=True)
+  results = {
+    'mse_sarima':mse_sarima,
+    'mse_chronos':mse_chronos,
+    'mse_gp':mse_gp,
+    'nmse_sarima':nmse_sarima,
+    'nmse_chronos':nmse_chronos,
+    'nmse_gp':nmse_gp
+  }
+
   if plot:
     print("MSE")
     print(f"- Chronos: {mse_chronos}")
@@ -298,15 +335,6 @@ def compare_prediction_methods(df,column,context_start,context_finish, predictio
     print(f"- Chronos: {nmse_chronos}")
     print(f"- SARIMA: {nmse_sarima}")
     print(f"- GP: {nmse_gp}")
-  else:
-    results = {
-      'mse_sarima':mse_sarima,
-      'mse_chronos':mse_chronos,
-      'mse_gp':mse_gp,
-      'nmse_sarima':nmse_sarima,
-      'nmse_chronos':nmse_chronos,
-      'nmse_gp':nmse_gp
-    }
 
   return results    
 

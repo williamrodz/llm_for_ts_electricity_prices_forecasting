@@ -13,6 +13,9 @@ This file contains the code for using the Chronos language model for predicting 
 ### sarima_wrapper.py
 Here you can find the code for generating forecast using the Seasonal - Auto Regressive Integrated Moving Average method. It is implemented using the `statsmodels.tsa.statespace.sarimax` package.
 
+### lstm_wrapper.py
+Code for predicting values using a LSTM based method. Data is normalized using a MinMaxScaler. A LSTM layer is followed by a linear layer. The LSTM layer processes the sequential input data (input_seq), maintaining an internal state (cell state and hidden state) that captures long-term dependencies in the data. During training, the model is trying to optimize MSE.
+
 ### gp_wrapper.py
 Code for using a Gaussian Process based method for forecasting. Uses the `sklearn.gaussian_process` package.
 
