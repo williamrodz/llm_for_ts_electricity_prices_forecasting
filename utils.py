@@ -282,11 +282,12 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   return algo_results
   
 
-def compare_prediction_methods(df,column,context_start,context_finish, prediction_length,plot=True,methods=["chronos_mini","sarima","gp","lstm"]):
-  # convert dates to index
+def compare_prediction_methods(df, data_column, date_column, context_start, context_finish, prediction_length, plot=True,methods=["chronos_mini","sarima","gp","lstm"]):
+  # convert dates to an integer index
   if type(context_start) == str:
-    context_start = find_first_occurrence_index(df, context_start,DATE_COLUMN)
-    context_finish = find_first_occurrence_index(df, context_finish,DATE_COLUMN)
+    context_start = find_first_occurrence_index(df, context_start, date_column)
+    context_finish = find_first_occurrence_index(df, context_finish, date_column)
+
   # Determine Forecast Indices
   forecast_start_index = context_finish
   forecast_end_index = forecast_start_index + prediction_length
@@ -304,7 +305,8 @@ def compare_prediction_methods(df,column,context_start,context_finish, predictio
       if chronos_version in valid_chronos_sizes:
         chronos_predictions = chronos_predict(
           df,
-          column,
+          data_column,
+          date_column,
           context_start,context_finish,
           prediction_length,
           plot=plot,
@@ -316,7 +318,7 @@ def compare_prediction_methods(df,column,context_start,context_finish, predictio
     elif method == "sarima":
       sarima_predictions = sarima_predict(
         df,
-        column,
+        data_column,
         context_start,
         context_finish,
         prediction_length,
@@ -324,14 +326,13 @@ def compare_prediction_methods(df,column,context_start,context_finish, predictio
         )
       joint_results[method] = {"predictions":sarima_predictions}
     elif method == "gp":
-      gp_predictions = gp_predict(df,column, context_start, context_finish, prediction_length, plot=plot)
+      gp_predictions = gp_predict(df, data_column, date_column, context_start, context_finish, prediction_length, plot=plot)
       joint_results[method] = {"predictions":gp_predictions}
     elif method == "lstm":
-      lstm_predictions = lstm_predict(df,column, context_start, context_finish, prediction_length, plot=plot)
+      lstm_predictions = lstm_predict(df, data_column, context_start, context_finish, prediction_length, plot=plot)
       joint_results[method] = {"predictions":lstm_predictions}
 
-
-    actual_values = df[forecast_start_index:forecast_end_index][column]
+    actual_values = df[forecast_start_index:forecast_end_index][data_column]
 
     if not len(actual_values) == len(joint_results[method]["predictions"]):
       raise ValueError("Unequal lengths of comparison values and predictions")
@@ -342,7 +343,7 @@ def compare_prediction_methods(df,column,context_start,context_finish, predictio
     joint_results[method]["nmse"] = nmse
 
   if plot:
-    output_message = f"\nResults comparison for {column}:\n\n"
+    output_message = f"\nResults comparison for {data_column}:\n\n"
     output_message += ("MSE\n")
     for method in methods:
       output_message += f"- {method} MSE: {joint_results[method]['mse']}\n"
@@ -355,14 +356,14 @@ def compare_prediction_methods(df,column,context_start,context_finish, predictio
   return joint_results    
 
 
-def get_sub_df_from_index(df, start_index, end_index):
+def get_sub_df_from_index(df, date_column, start_index, end_index):
   output_df = None
   if type(start_index) == str:
     # convert dates to index
-    mask = (df[DATE_COLUMN] >= start_index) & (df[DATE_COLUMN] <= end_index)
+    mask = (df[date_column] >= start_index) & (df[date_column] <= end_index)
     output_df = df.loc[mask]
-    start_index = find_first_occurrence_index(df, start_index,DATE_COLUMN)
-    end_index = find_first_occurrence_index(df, end_index,DATE_COLUMN)
+    start_index = find_first_occurrence_index(df, start_index,date_column)
+    end_index = find_first_occurrence_index(df, end_index,date_column)
     # forecast_index = range(end_index + 1,end_index + 1 + prediction_length)
   elif not start_index is None and not end_index is None:
     output_df = df[start_index:end_index]

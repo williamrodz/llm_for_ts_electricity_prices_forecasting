@@ -8,25 +8,12 @@ from math import sqrt
 import utils
 import matplotlib.pyplot as plt
 
-
-DATE_COLUMN = "Date"
-
 def sarima_predict(df, column, training_start_index,training_end_index, prediction_length, plot=True):
   # Assuming df is your DataFrame and it has been previously defined
-  training_df = None
 
-  if type(training_start_index) == str:
-    # convert dates to index
-    mask = (df[DATE_COLUMN] >= training_start_index) & (df[DATE_COLUMN] <= training_end_index)
-    training_df = df.loc[mask]
-    training_start_index = utils.find_first_occurrence_index(df, training_start_index,DATE_COLUMN)
-    training_end_index = utils.find_first_occurrence_index(df, training_end_index,DATE_COLUMN)
-    forecast_index = range(training_end_index + 1,training_end_index + 1 + prediction_length)
-  elif not training_start_index is None and not training_end_index is None:
-    training_df = df[training_start_index:training_end_index]
-    forecast_index = df.index[training_end_index:training_end_index + prediction_length]
-  else:
-    raise ValueError(f'training_start_index is {type(training_start_index)}. Must be int or str.')
+  training_df = df[training_start_index:training_end_index]
+  forecast_index = df.index[training_end_index:training_end_index + prediction_length]
+
 
   # print("SARIMA DEBUG")
   # print(f"training_df is\n{training_df}")

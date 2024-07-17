@@ -40,6 +40,7 @@ from constants import *
 def chronos_predict(
   input_data: [float],
   column: str,
+  date_column: str,
   context_start_index: int,
   context_end_index: int,
   prediction_length: int,
@@ -78,10 +79,10 @@ def chronos_predict(
 
     if type(context_start_index) == str:
       # convert dates to index
-      mask = (input_data[DATE_COLUMN] >= context_start_index) & (input_data[DATE_COLUMN] <= context_end_index)
+      mask = (input_data[date_column] >= context_start_index) & (input_data[date_column] <= context_end_index)
       training_df = input_data.loc[mask]
-      context_start_index = utils.find_first_occurrence_index(input_data, context_start_index,DATE_COLUMN)
-      context_end_index = utils.find_first_occurrence_index(input_data, context_end_index,DATE_COLUMN)    
+      context_start_index = utils.find_first_occurrence_index(input_data, context_start_index,date_column)
+      context_end_index = utils.find_first_occurrence_index(input_data, context_end_index,date_column)    
 
     context_slice = input_data[column][context_start_index:context_end_index]
     context_data_tensor = torch.tensor(context_slice.tolist())

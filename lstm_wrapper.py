@@ -19,10 +19,10 @@ class LSTM(nn.Module):
         predictions = self.linear(lstm_out[:, -1])
         return predictions
 
-def lstm_predict(df, column, context_start, context_end, prediction_length, plot=True):
+def lstm_predict(df, column, context_start_index, context_end_index, prediction_length, plot=True):
     # Select the relevant data
     data = df[column].values
-    data = data[context_start:context_end]
+    data = data[context_start_index:context_end_index]
     
     # Normalize the data
     scaler = MinMaxScaler()
@@ -99,10 +99,10 @@ def lstm_predict(df, column, context_start, context_end, prediction_length, plot
         plt.figure(figsize=(8, 4))
         plt.title('LSTM Forecasting')
 
-        plt.plot(range(context_start), df[column][:context_start], color="royalblue", label="Reference data")
-        plt.plot(range(context_start, context_end,), df[column][context_start:context_end], color="green", label="Context data")
-        plt.plot(range(context_end,n), df[column][context_end:], color="royalblue", label="Reference data")
-        plt.plot(range(context_end, context_end + prediction_length), future_predictions, color="tomato", label="Median forecast")
+        plt.plot(range(context_start_index), df[column][:context_start_index], color="royalblue", label="Reference data")
+        plt.plot(range(context_start_index, context_end_index,), df[column][context_start_index:context_end_index], color="green", label="Context data")
+        plt.plot(range(context_end_index,n), df[column][context_end_index:], color="royalblue", label="Reference data")
+        plt.plot(range(context_end_index, context_end_index + prediction_length), future_predictions, color="tomato", label="Median forecast")
 
         # plt.plot(data, label='Actual Values', color='blue')
         # plt.plot(range(SEQ_LENGTH, SEQ_LENGTH + len(test_preds)), test_preds, label='Predictions', linestyle='--', color='red')

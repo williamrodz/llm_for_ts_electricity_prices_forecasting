@@ -5,16 +5,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from constants import *
 
-def gp_predict(df, column, training_start_index, training_end_index, prediction_length,plot=True):
+def gp_predict(df, column, date_column, training_start_index, training_end_index, prediction_length,plot=True):
   # Check for string date
-  if isinstance(training_start_index, str) and isinstance(training_end_index, str):
-    training_start_index = utils.find_first_occurrence_index(df, training_start_index,DATE_COLUMN)
-    training_end_index = utils.find_first_occurrence_index(df, training_end_index,DATE_COLUMN)
-  elif isinstance(training_start_index, str) or isinstance(training_end_index, str):
-    raise ValueError("Both training_start_index and training_end_index must be strings or integers")
+  if isinstance(training_start_index, str) or isinstance(training_end_index, str):
+    raise ValueError("Both training_start_index and training_end_index must be integers")
 
   # Extract the data
-  training_df = utils.get_sub_df_from_index(df, training_start_index, training_end_index)
+  training_df = df[training_start_index:training_end_index]
 
   # Define the kernel
   kernel = C(1.0, (1e-3, 1e3)) * RBF(1, (1e-2, 1e2)) + Matern(length_scale=1.0, nu=1.5) + ExpSineSquared(length_scale=1.0, periodicity=3.0)
