@@ -31,7 +31,7 @@ See overview of system prices on different time horizons
 ### system_price_forecasting.ipynb
 Compare performance of SARIMA, Chronos, LSTM, and Gaussian Processes forecasting on System Energy Price Data
 
-### half_hourly_price_of_electricity
+### half_hourly_prices_forecasting.ipynb
 Compare performance of forecasting algorithms on half hourly energy prices of electricity. Provided by Octopus
 
 

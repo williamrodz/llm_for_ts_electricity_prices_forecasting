@@ -39,12 +39,17 @@ def gp_predict(df, column, date_column, training_start_index, training_end_index
 
   # Plot the original data and the forecast
   if plot:
+    # plot a window of actual data two prediction windows to each side
+    n = len(df)
+    left_most_index = max(0, training_start_index - 2 * prediction_length)
+    right_most_index = min(n, training_end_index + 2 * prediction_length)
+
     plt.figure(figsize=(8, 4))
     plt.title("GP Forecast")
-    plt.plot(df[column][: training_start_index], color="royalblue", label="historical data")
-    plt.plot(df[column][training_start_index: training_end_index], color="green", label="context")
-    plt.plot(df[column][forecast_index[0]:], color="royalblue", label="historical data")
-    plt.plot(forecast_index, y_pred, color="tomato", label="median forecast")
+    plt.plot(df[column][left_most_index: training_start_index], color="royalblue", label="Historical Data")
+    plt.plot(df[column][training_start_index: training_end_index], color="green", label="Context")
+    plt.plot(df[column][forecast_index[0]: right_most_index], color="royalblue", label="Post Context Historical Data")
+    plt.plot(forecast_index, y_pred, color="tomato", label="Median Forecast")
     plt.legend()
     plt.show()
 

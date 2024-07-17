@@ -306,7 +306,6 @@ def compare_prediction_methods(df, data_column, date_column, context_start, cont
         chronos_predictions = chronos_predict(
           df,
           data_column,
-          date_column,
           context_start,context_finish,
           prediction_length,
           plot=plot,

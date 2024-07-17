@@ -47,12 +47,21 @@ def sarima_predict(df, column, training_start_index,training_end_index, predicti
   sarima_forecast = model_fit.forecast(steps=prediction_length)
 
   # Plot the original data and the forecast
+
+
+
   if plot:
+    # plot a window of actual data two prediction windows to each side
+    n = len(df)
+    left_most_index = max(0, training_start_index - 2 * prediction_length)
+    right_most_index = min(n, training_end_index + 2 * prediction_length)
+
+
     plt.figure(figsize=(8, 4))
     plt.title("S-ARIMA Forecast")
-    plt.plot(df[column][: training_start_index], color="royalblue", label="historical data")
+    plt.plot(df[column][left_most_index: training_start_index], color="royalblue", label="historical data")
     plt.plot(df[column][training_start_index: training_end_index], color="green", label="context")
-    plt.plot(df[column][forecast_index[0]:], color="royalblue", label="historical data")
+    plt.plot(df[column][forecast_index[0]:right_most_index], color="royalblue", label="Post Context Historical data")
     plt.plot(forecast_index, sarima_forecast, color="tomato", label="median forecast")
     plt.legend()
     plt.show()

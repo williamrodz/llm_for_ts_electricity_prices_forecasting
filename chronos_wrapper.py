@@ -40,7 +40,6 @@ from constants import *
 def chronos_predict(
   input_data: [float],
   column: str,
-  date_column: str,
   context_start_index: int,
   context_end_index: int,
   prediction_length: int,
@@ -77,13 +76,9 @@ def chronos_predict(
     # Determine size of input time series
     n = len(input_data)
 
-    if type(context_start_index) == str:
-      # convert dates to index
-      mask = (input_data[date_column] >= context_start_index) & (input_data[date_column] <= context_end_index)
-      training_df = input_data.loc[mask]
-      context_start_index = utils.find_first_occurrence_index(input_data, context_start_index,date_column)
-      context_end_index = utils.find_first_occurrence_index(input_data, context_end_index,date_column)    
-
+    if type(context_start_index) == str or type(context_end_index) == str:
+      raise ValueError("Both context_start_index and context_end_index must be integers")
+      
     context_slice = input_data[column][context_start_index:context_end_index]
     context_data_tensor = torch.tensor(context_slice.tolist())
 
@@ -103,14 +98,18 @@ def chronos_predict(
     high_predictions = high  
 
     num_median_predictions = len(median_predictions)
+
+    # plot a window of actual data two prediction windows to each side
+    left_most_index = max(0, context_start_index - 2 * prediction_length)
+    right_most_index = min(n, context_end_index + 2 * prediction_length)
     
     if plot:
       plt.figure(figsize=(8, 4))
       plt.title("Chronos Forecast")
-      plt.plot(range(context_start_index), input_data[column][:context_start_index], color="royalblue", label="Reference data")
+      plt.plot(range(left_most_index,context_start_index), input_data[column][left_most_index:context_start_index], color="royalblue", label="Reference data")
       plt.plot(range(context_start_index, context_end_index,), input_data[column][context_start_index:context_end_index], color="green", label="Context data")
-      plt.plot(range(context_end_index,n), input_data[column][context_end_index:], color="royalblue", label="Reference data")
-      plt.plot(range(context_end_index, context_end_index + num_median_predictions), median_predictions, color="tomato", label="Median forecast")
+      plt.plot(range(context_end_index,right_most_index), input_data[column][context_end_index:right_most_index], color="royalblue", label="Post-context reference data")
+      plt.plot(range(context_end_index, context_end_index + num_median_predictions), median_predictions, color="tomato", label="Chronos Median forecast")
       plt.fill_between(range(context_end_index, context_end_index + num_median_predictions), low_predictions, high_predictions, color="tomato", alpha=0.3, label="80% prediction interval")
       plt.legend()
       plt.grid()

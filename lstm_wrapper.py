@@ -93,15 +93,19 @@ def lstm_predict(df, column, context_start_index, context_end_index, prediction_
     future_predictions = future_predictions.flatten()
     
     # Plotting
-    n = len(df)
-
     if plot:
+        n = len(df)
+
+        # plot a window of actual data two prediction windows to each side
+        left_most_index = max(0, context_start_index - 2 * prediction_length)
+        right_most_index = min(n, context_end_index + 2 * prediction_length)
+
         plt.figure(figsize=(8, 4))
         plt.title('LSTM Forecasting')
 
-        plt.plot(range(context_start_index), df[column][:context_start_index], color="royalblue", label="Reference data")
+        plt.plot(range(left_most_index,context_start_index), df[column][left_most_index:context_start_index], color="royalblue", label="Reference data")
         plt.plot(range(context_start_index, context_end_index,), df[column][context_start_index:context_end_index], color="green", label="Context data")
-        plt.plot(range(context_end_index,n), df[column][context_end_index:], color="royalblue", label="Reference data")
+        plt.plot(range(context_end_index,right_most_index), df[column][context_end_index:right_most_index], color="royalblue", label="Post Context Reference Data")
         plt.plot(range(context_end_index, context_end_index + prediction_length), future_predictions, color="tomato", label="Median forecast")
 
         # plt.plot(data, label='Actual Values', color='blue')
