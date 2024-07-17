@@ -17,4 +17,4 @@ prediction_length = 64
 
 context_window_length = utils.find_first_occurrence_index(system_prices,end,DATE_COLUMN) - utils.find_first_occurrence_index(system_prices,start,"Date")
 # print(f"context_window_length: {context_window_length}")
-results = utils.sliding_window_analysis_for_algorithm("gp","Daily System Prices", system_prices,column,context_window_length,prediction_length)
+results = utils.sliding_window_analysis_for_algorithm("chronos_mini","Daily System Prices", system_prices,column,context_window_length,prediction_length)

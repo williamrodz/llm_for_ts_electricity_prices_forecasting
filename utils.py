@@ -5,6 +5,7 @@ from chronos import ChronosPipeline
 from chronos_wrapper import chronos_predict
 from sarima_wrapper import sarima_predict
 from gp_wrapper import gp_predict
+from lstm_wrapper import lstm_predict
 from tqdm import tqdm
 from constants import *
 import json
@@ -74,7 +75,7 @@ def find_first_occurrence_index(df, date_string, date_column):
     else:
         return -1
 
-def plot_error_comparison(results):
+def x(results):
   # Extract the values and keys
   keys = list(results.keys())
   values = list(results.values())
@@ -172,6 +173,8 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
     
     if suffix in valid_chronos_sizes:
       #initialize chronos pipeline
+      print("= = = = >")
+      print(f"Initializing Chronos {suffix} pipeline...\n")
       pipeline = ChronosPipeline.from_pretrained(
       f"amazon/chronos-t5-{suffix}",
       device_map=DEVICE_MAP,  
@@ -279,64 +282,77 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   return algo_results
   
 
-def compare_prediction_methods(df,column,context_start,context_finish, prediction_length,plot=True):
-  sarima_predictions = sarima_predict(
-    df,
-    column,
-    context_start,
-    context_finish,
-    prediction_length,
-    plot=plot
-    )
-  chronos_predictions = chronos_predict(
-            df,
-            column,
-            context_start,context_finish,
-            prediction_length,
-            plot=plot
-            )
-
-  gp_predictions = gp_predict(df,column, context_start, context_finish, prediction_length, plot=plot)
-
-
-  # Forecast
-
-  forecast_start_index = find_first_occurrence_index(df, context_finish, "Date") + 1
+def compare_prediction_methods(df,column,context_start,context_finish, prediction_length,plot=True,methods=["chronos_mini","sarima","gp","lstm"]):
+  # convert dates to index
+  if type(context_start) == str:
+    context_start = find_first_occurrence_index(df, context_start,DATE_COLUMN)
+    context_finish = find_first_occurrence_index(df, context_finish,DATE_COLUMN)
+  # Determine Forecast Indices
+  forecast_start_index = context_finish
   forecast_end_index = forecast_start_index + prediction_length
-
-  actual_values = df[forecast_start_index:forecast_end_index][column]
-
-  if not len(actual_values) == len(sarima_predictions) == len(chronos_predictions):
-    print("Unequal lengths of comparison values and predictions")
   
-  mse_sarima = calculate_mse(actual_values, sarima_predictions)
-  mse_chronos = calculate_mse(actual_values, chronos_predictions)
-  mse_gp = calculate_mse(actual_values, gp_predictions)
+  
+  joint_results = {}
+  for method in methods:
+    if method.startswith("chronos_"):
+      # Extract the part after "chronos_"
+      chronos_version = method[len("chronos_"):]
+      
+      # Define the valid sizes
+      valid_chronos_sizes = {"tiny", "mini", "small", "base", "large"}
+      
+      if chronos_version in valid_chronos_sizes:
+        chronos_predictions = chronos_predict(
+          df,
+          column,
+          context_start,context_finish,
+          prediction_length,
+          plot=plot,
+          version=chronos_version
+          )
+        joint_results[method] = {"predictions":chronos_predictions}
+      else:
+        raise ValueError(f"Invalid Chronos model size: {chronos_version}. Valid sizes are: {valid_chronos_sizes}")
+    elif method == "sarima":
+      sarima_predictions = sarima_predict(
+        df,
+        column,
+        context_start,
+        context_finish,
+        prediction_length,
+        plot=plot
+        )
+      joint_results[method] = {"predictions":sarima_predictions}
+    elif method == "gp":
+      gp_predictions = gp_predict(df,column, context_start, context_finish, prediction_length, plot=plot)
+      joint_results[method] = {"predictions":gp_predictions}
+    elif method == "lstm":
+      lstm_predictions = lstm_predict(df,column, context_start, context_finish, prediction_length, plot=plot)
+      joint_results[method] = {"predictions":lstm_predictions}
 
-  nmse_sarima = calculate_mse(actual_values, sarima_predictions,normalized=True)
-  nmse_chronos = calculate_mse(actual_values, chronos_predictions,normalized=True)
-  nmse_gp = calculate_mse(actual_values, gp_predictions,normalized=True)
-  results = {
-    'mse_sarima':mse_sarima,
-    'mse_chronos':mse_chronos,
-    'mse_gp':mse_gp,
-    'nmse_sarima':nmse_sarima,
-    'nmse_chronos':nmse_chronos,
-    'nmse_gp':nmse_gp
-  }
+
+    actual_values = df[forecast_start_index:forecast_end_index][column]
+
+    if not len(actual_values) == len(joint_results[method]["predictions"]):
+      raise ValueError("Unequal lengths of comparison values and predictions")
+  
+    mse = calculate_mse(actual_values, joint_results[method]["predictions"])
+    nmse = calculate_mse(actual_values, joint_results[method]["predictions"],normalized=True)
+    joint_results[method]["mse"] = mse
+    joint_results[method]["nmse"] = nmse
 
   if plot:
-    print("MSE")
-    print(f"- Chronos: {mse_chronos}")
-    print(f"- SARIMA: {mse_sarima}")
-    print(f"- GP: {mse_gp}")
-    
-    print(f"NMSE")
-    print(f"- Chronos: {nmse_chronos}")
-    print(f"- SARIMA: {nmse_sarima}")
-    print(f"- GP: {nmse_gp}")
+    output_message = f"\nResults comparison for {column}:\n\n"
+    output_message += ("MSE\n")
+    for method in methods:
+      output_message += f"- {method} MSE: {joint_results[method]['mse']}\n"
+    output_message += ("NMSE\n")
+    for method in methods:
+      output_message += f"- {method} NMSE: {joint_results[method]['nmse']}\n"      
+    print(output_message)
+  # Plot the results in a bar chart    
 
-  return results    
+  return joint_results    
 
 
 def get_sub_df_from_index(df, start_index, end_index):

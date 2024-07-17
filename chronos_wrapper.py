@@ -44,13 +44,14 @@ def chronos_predict(
   context_end_index: int,
   prediction_length: int,
   pipeline=None,
-  plot=True
+  plot=True,
+  version="small"
   ):
     # Initialize pipeline if not provided
     if pipeline is None:
-      print("- Initializing Chronos pipeline. May take time..")
+      print(f"= = = > Chronos pipeline not initialized. Firing up {version} pipeline. May take time..")
       pipeline = ChronosPipeline.from_pretrained(
-          "amazon/chronos-t5-small",
+          f"amazon/chronos-t5-{version}",
           device_map=DEVICE_MAP,  
           torch_dtype=torch.bfloat16,
       )

@@ -19,7 +19,7 @@ class LSTM(nn.Module):
         predictions = self.linear(lstm_out[:, -1])
         return predictions
 
-def lstm_predict(df, column, context_start, context_end, prediction_length):
+def lstm_predict(df, column, context_start, context_end, prediction_length, plot=True):
     # Select the relevant data
     data = df[column].values
     data = data[context_start:context_end]
@@ -89,16 +89,25 @@ def lstm_predict(df, column, context_start, context_end, prediction_length):
             last_sequence = torch.cat((last_sequence[:, 1:, :], pred.view(1, 1, 1)), dim=1)
     
     future_predictions = scaler.inverse_transform(np.array(future_predictions).reshape(-1, 1))
+    # Flatten the future predictions
+    future_predictions = future_predictions.flatten()
     
     # Plotting
-    plt.figure(figsize=(16, 8))
-    plt.title('Model Predictions vs Actual Values')
-    plt.xlabel('Time', fontsize=18)
-    plt.ylabel('Value', fontsize=18)
-    plt.plot(data, label='Actual Values', color='blue')
-    plt.plot(range(SEQ_LENGTH, SEQ_LENGTH + len(test_preds)), test_preds, label='Predictions', linestyle='--', color='red')
-    plt.legend()
-    plt.show()
+    n = len(df)
+
+    if plot:
+        plt.figure(figsize=(8, 4))
+        plt.title('LSTM Forecasting')
+
+        plt.plot(range(context_start), df[column][:context_start], color="royalblue", label="Reference data")
+        plt.plot(range(context_start, context_end,), df[column][context_start:context_end], color="green", label="Context data")
+        plt.plot(range(context_end,n), df[column][context_end:], color="royalblue", label="Reference data")
+        plt.plot(range(context_end, context_end + prediction_length), future_predictions, color="tomato", label="Median forecast")
+
+        # plt.plot(data, label='Actual Values', color='blue')
+        # plt.plot(range(SEQ_LENGTH, SEQ_LENGTH + len(test_preds)), test_preds, label='Predictions', linestyle='--', color='red')
+        plt.show()
+    return future_predictions
 
 # Example usage:
 # df = pd.read_csv('your_timeseries_data.csv')
