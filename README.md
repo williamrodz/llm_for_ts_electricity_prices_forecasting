@@ -25,6 +25,13 @@ This script generates a Mackey-Glass chaotic data series and saves it as a CSV f
 ### mackey_glass_time_series.csv
 This CSV file contains the generated Mackey-Glass chaotic time series data. It is used as input data for testing forecasting methods.
 
+### system_price_overview.ipynb
+See overview of system prices on different time horizons
+
+### system_price_forecasting.ipynb
+Compare performance of SARIMA, Chronos, LSTM, and Gaussian Processes forecasting on System Energy Price Data
+
+
 ### Data/
 
    Folder that contains all time series data for predicting and comparing performance of forecasting methods
@@ -57,6 +64,5 @@ After completing these steps, all the necessary packages specified in the `requi
 
 ## Usage
 
-- **Compare performance of SARIMA, Chronos, and Gaussian Processes on System Energy Price Data:** 
-   
-   Open `system_price.ipynb` using your favorite Python notebook viewing software. I use Visual Studio Code with the Jupyter Notebook extension. 
+- Open and run the python notebooks listed above to see comparisons of forecasts of energy data 
+
