@@ -12,7 +12,6 @@ import json
 import time
 import os
 
-
 # Custom JSON Encoder
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -42,7 +41,7 @@ def calculate_mse(actual_values, predicted_values,normalized=False):
     variance_of_actual_values = np.var(actual_values)
     return mse / variance_of_actual_values
   else:
-    return mse / n
+    return mse
 
 def calculate_rmse(actual_values, predicted_values):
   return sqrt(calculate_mse(actual_values, predicted_values))
@@ -221,7 +220,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
         raise ValueError(f"Invalid algorithm {algo}")
       
       # Obtain Actual Values
-      forecast_start_index = find_first_occurrence_index(df, context_finish, "Date") + 1
+      forecast_start_index = context_finish
       forecast_end_index = forecast_start_index + prediction_length
       n_predictions = len(algo_predictions)
 
@@ -280,7 +279,6 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   save_dict_to_json(algo_results, file_name)
 
   return algo_results
-  
 
 def compare_prediction_methods(df, data_column, date_column, context_start, context_finish, prediction_length, plot=True,methods=["chronos_mini","sarima","gp","lstm"]):
   # convert dates to an integer index
@@ -291,7 +289,6 @@ def compare_prediction_methods(df, data_column, date_column, context_start, cont
   # Determine Forecast Indices
   forecast_start_index = context_finish
   forecast_end_index = forecast_start_index + prediction_length
-  
   
   joint_results = {}
   for method in methods:

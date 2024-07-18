@@ -112,7 +112,3 @@ def lstm_predict(df, column, context_start_index, context_end_index, prediction_
         # plt.plot(range(SEQ_LENGTH, SEQ_LENGTH + len(test_preds)), test_preds, label='Predictions', linestyle='--', color='red')
         plt.show()
     return future_predictions
-
-# Example usage:
-# df = pd.read_csv('your_timeseries_data.csv')
-# tf_predict(df, 'your_column_name', 0, 1000, prediction_length=30)

@@ -29,17 +29,10 @@ def gp_predict(df, column, date_column, training_start_index, training_end_index
 
   y_pred, sigma = gp.predict(forecast_index.to_numpy().reshape(-1, 1), return_std=True)
 
-  # print("y_pred")
-  # print(y_pred)
-
   actual_values = df[forecast_index[0]:forecast_index[-1]][column]
-
-  gp_mse = utils.calculate_mse(actual_values, y_pred)
-  # print(f"GP MSE: {gp_mse}")
 
   # Plot the original data and the forecast
   if plot:
-    # plot a window of actual data two prediction windows to each side
     n = len(df)
     left_most_index = max(0, training_start_index - 2 * prediction_length)
     right_most_index = min(n, training_end_index + 2 * prediction_length)

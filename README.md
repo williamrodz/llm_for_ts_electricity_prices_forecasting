@@ -25,6 +25,9 @@ This script generates a Mackey-Glass chaotic data series and saves it as a CSV f
 ### mackey_glass_time_series.csv
 This CSV file contains the generated Mackey-Glass chaotic time series data. It is used as input data for testing forecasting methods.
 
+### kickoff_sliding_window.py
+Modify and run this file to get cumulative errors for an algorithm across a dataset
+
 ### system_price_overview.ipynb
 See overview of system prices on different time horizons
 
