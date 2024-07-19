@@ -28,20 +28,33 @@ def save_dict_to_json(dictionary, file_path):
     with open(file_path, 'w') as json_file:
         json.dump(dictionary, json_file, indent=4, cls=NumpyEncoder)
 
-def calculate_mse(actual_values, predicted_values,normalized=False):
-  cum_sum = 0
+def calculate_mse(actual_values, predicted_values):
+  cum_sum_of_errors = 0
   n = len(predicted_values)
   for (actual,expected) in zip(actual_values,predicted_values):
     error = (expected - actual) ** 2
-    cum_sum += error
+    cum_sum_of_errors += error
   
-  mse = cum_sum / n
-  if normalized:
-    # obtain variance of predicted values
-    variance_of_actual_values = np.var(actual_values)
-    return mse / variance_of_actual_values
-  else:
-    return mse
+  mse = cum_sum_of_errors / n
+  return mse
+
+def calculate_nmse(y_true, y_pred):
+    """
+    Calculate the Normalized Mean Square Error (NMSE).
+    
+    NMSE = MSE / var(y_true)
+    
+    :param y_true: array-like, true values
+    :param y_pred: array-like, predicted values
+    :return: float, normalized mean square error
+    """
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+    
+    mse = np.mean((y_true - y_pred) ** 2)
+    variance_of_true_values = np.var(y_true)
+    
+    return mse / variance_of_true_values
 
 def calculate_rmse(actual_values, predicted_values):
   return sqrt(calculate_mse(actual_values, predicted_values))
@@ -234,7 +247,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
       cum_mse += mse
       ledger_mse.append(mse)
 
-      nmse = calculate_mse(actual_values, algo_predictions,normalized=True)
+      nmse = calculate_nmse(actual_values, algo_predictions)
       cum_nmse += nmse
       ledger_nmse.append(nmse)
 
@@ -334,7 +347,7 @@ def compare_prediction_methods(df, data_column, date_column, context_start, cont
       raise ValueError("Unequal lengths of comparison values and predictions")
   
     mse = calculate_mse(actual_values, joint_results[method]["predictions"])
-    nmse = calculate_mse(actual_values, joint_results[method]["predictions"],normalized=True)
+    nmse = calculate_nmse(actual_values, joint_results[method]["predictions"])
     joint_results[method]["mse"] = mse
     joint_results[method]["nmse"] = nmse
 
