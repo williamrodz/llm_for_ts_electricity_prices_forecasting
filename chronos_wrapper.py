@@ -9,7 +9,6 @@ import pmdarima as pm
 import utils
 from constants import *
 
-
 """
 input: 
     model:
@@ -34,7 +33,6 @@ output:
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-
 from constants import *
 
 def chronos_predict(
