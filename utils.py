@@ -243,14 +243,18 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
         raise ValueError(f"Unequal lengths {n_actual_values} != {n_predictions}")
       
       mse = calculate_mse(actual_values, algo_predictions)
-      cum_mse += mse
+      if not np.isnan(mse):
+        cum_mse += mse
       ledger_mse.append(mse)
 
       nmse = calculate_nmse(actual_values, algo_predictions)
-      cum_nmse += nmse
+      if not np.isnan(nmse):
+        cum_nmse += nmse
       ledger_nmse.append(nmse)
 
-      num_successful_runs += 1
+      if not np.isnan(mse) and not np.isnan(nmse):
+        num_successful_runs += 1
+
   end_time = time.time()
 
   # Calculate elapsed time in seconds
@@ -270,14 +274,14 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
     "prediction_length":prediction_length,
     "data_title":data_title,
     "dataset_length":len(df),
-    "elapsed_seconds":elapsed_seconds,
     "elapsed_hours":elapsed_hours,
     "cum_mse":cum_mse,
     "cum_nmse":cum_nmse,
     "mean_mse":mean_mse,
     "mean_nmse":mean_nmse,
-    "num_successful_runs":num_successful_runs,
     "num_possible_iterations":num_possible_iterations,
+    "num_successful_runs":num_successful_runs,
+    "successful_run_percentage": num_successful_runs / num_possible_iterations * 100,
     "ledger_mse":ledger_mse,
     "ledger_nmse":ledger_nmse,    
     }

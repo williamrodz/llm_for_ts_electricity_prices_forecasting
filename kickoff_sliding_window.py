@@ -15,10 +15,13 @@ def kickoff_sliding_window():
     data_column = "Price_Ex_VAT"
     context_window_length = 7 * 48
     prediction_length = 48
-    minimum_running_length = context_window_length + prediction_length # for debugging 
+
 
     df = pd.read_csv(f"{DATA_FOLDER}/{csv_title}.csv")
     df_to_slide_on = df[subsection_start:subsection_end]
+
+    # For debugging
+    minimum_running_length = context_window_length + prediction_length
     #df_to_slide_on = df[:minimum_running_length]
 
 
