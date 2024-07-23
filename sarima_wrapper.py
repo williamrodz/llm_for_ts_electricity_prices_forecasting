@@ -27,8 +27,8 @@ def sarima_predict(df, column, training_start_index,training_end_index, predicti
   # print(f"training_df is\n{training_df}")
   # Use auto_arima to find the optimal p, d, q, P, D, Q, m values
   stepwise_fit = pm.auto_arima(training_df[column],
-                              start_p=0, start_q=0, max_p=5, max_q=5,
-                              start_P=0, start_Q=0, max_P=5, max_Q=5,
+                              start_p=0, start_q=0, max_p=3, max_q=3,
+                              start_P=0, start_Q=0, max_P=3, max_Q=3,
                               seasonal=True, m=seasonal_period,
                               trace=False,
                               error_action='ignore',

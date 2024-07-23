@@ -128,7 +128,7 @@ def sliding_window_analysis(df,column,context_length,prediction_length):
   fail_count = 0
   # Loop with tqdm progress bar
 
-  num_possible_iterations = len(df) - context_length - prediction_length
+  num_possible_iterations = len(df) - context_length - prediction_length + 1
   print("Starting sliding window analysis")
   print("Note: This may take a while especially with a smaller context window and longer dataset.")
   print(f"- Algorithm:                SARIMA, Chronos, GP")
@@ -137,8 +137,7 @@ def sliding_window_analysis(df,column,context_length,prediction_length):
   print(f"- # of Possible iterations: {num_possible_iterations}")
   print("")
 
-  for i in tqdm(range(0, len(df) - context_length - prediction_length)):
-      print(f"\nITERATION {i} of {len(df) - context_length - prediction_length}\n\n")
+  for i in tqdm(range(0, num_possible_iterations)):
       context_start = i
       context_finish = i + context_length
       try:
@@ -170,7 +169,7 @@ def sliding_window_analysis(df,column,context_length,prediction_length):
   return results
 
 def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_length, prediction_length,plot=False):
-  num_possible_iterations = len(df) - context_length - prediction_length
+  num_possible_iterations = len(df) - context_length - prediction_length + 1
   cum_mse = 0
   ledger_mse = []
   cum_nmse = 0
@@ -208,7 +207,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   num_successful_runs = 0 
   start_time = time.time()
 
-  for i in tqdm(range(0, len(df) - context_length - prediction_length)):
+  for i in tqdm(range(0, num_possible_iterations)):
       context_start = i
       context_finish = i + context_length
 
@@ -260,6 +259,10 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   # Convert elapsed time to hours
   elapsed_hours = elapsed_seconds / 3600
 
+  # Mean MSE and NMSE
+  mean_mse = np.mean(ledger_mse)
+  mean_nmse = np.mean(ledger_nmse)
+
   # Save results in a txt file
   algo_results = {
     "algorithm":algo,
@@ -271,6 +274,8 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
     "elapsed_hours":elapsed_hours,
     "cum_mse":cum_mse,
     "cum_nmse":cum_nmse,
+    "mean_mse":mean_mse,
+    "mean_nmse":mean_nmse,
     "num_successful_runs":num_successful_runs,
     "num_possible_iterations":num_possible_iterations,
     "ledger_mse":ledger_mse,
@@ -288,12 +293,12 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   timestamp = pd.Timestamp.now()
   # Create the directory if it doesn't exist
   os.makedirs(f"{RESULTS_FOLDER_NAME}/{algo}", exist_ok=True)  
-  file_name = f"{RESULTS_FOLDER_NAME}/{algo}/{algo}-context_length-{context_length}-data_title{data_title}-{timestamp}.txt"
+  file_name = f"{RESULTS_FOLDER_NAME}/{algo}/{algo}|context_length|{context_length}|data_title|{data_title}|{timestamp}.txt"
   save_dict_to_json(algo_results, file_name)
 
   return algo_results
 
-def compare_prediction_methods(df, data_column, date_column, context_start, context_finish, prediction_length, plot=True,methods=["chronos_mini","sarima","gp","lstm"]):
+def compare_prediction_methods(df, data_column, date_column, context_start, context_finish, prediction_length, plot=True,methods=["chronos_mini","gp","sarima","lstm"]):
   # convert dates to an integer index
   if type(context_start) == str:
     context_start = find_first_occurrence_index(df, context_start, date_column)

@@ -42,6 +42,20 @@ Compare performance of forecasting algorithms on half hourly energy prices of el
 
    Folder that contains all time series data for predicting and comparing performance of forecasting methods
 
+    `system_price.csv`
+    - 1637 time steps (4.48 years) of price per kwh, each representing a daily price
+    - Training set     :   0  ->  730   (2 years, 730 samples)
+    - Test set Alpha   :  731 ->  1096  (1 year, 365 samples)
+    - Test set Beta    : 1097 ->  1462  (1 year, 365 samples)
+
+    Agile_Octopus_London.csv
+    - Original file name: Agile_Octopus_C_London-AGILE-22-07-22
+    - 31,208 time steps/ 1.78 years of per kwh, each representing a half hour price
+    - Training set      :        0 -> 10,402   (217 days, 10,416 samples)
+    - Test set Gamma    :   10,403 -> 20,805   (217 days, 10,416 samples)
+    - Test set Delta    :   20,806 -> 31,208   (217 days, 10,416 samples)
+
+
 ## Getting Ready
 
 To install the necessary dependencies for this project, follow these steps:
