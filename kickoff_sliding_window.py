@@ -5,17 +5,70 @@ import os
 import utils
 import json
 from constants import *
+import argparse
 
 
-def kickoff_sliding_window():
-    csv_title = "agile_octopus_london"
-    data_title = f"{csv_title}_alpha"
-    subsection_start = 0
-    subsection_end = 10416
-    data_column = "Price_Ex_VAT"
-    context_window_length = 7 * 48
-    prediction_length = 48
 
+alpha = {
+    "csv_title": "agile_octopus_london",
+    "data_title": "agile_octopus_london_alpha",
+    "subsection_start": 0,
+    "subsection_end": 10403,
+    "data_column": "Price_Ex_VAT",
+    "context_window_length": 7 * 48,
+    "prediction_length": 48
+}
+
+beta = {
+    "csv_title": "agile_octopus_london",
+    "data_title": "agile_octopus_london_beta",
+    "subsection_start": 10403,
+    "subsection_end": 20806,
+    "data_column": "Price_Ex_VAT",
+    "context_window_length": 7 * 48,
+    "prediction_length": 48
+    }
+
+delta = {
+    "csv_title": "agile_octopus_london",
+    "data_title": "agile_octopus_london_delta",
+    "subsection_start": 20806,
+    "subsection_end": 31209,
+    "data_column": "Price_Ex_VAT",
+    "context_window_length": 7 * 48,
+    "prediction_length": 48
+    }
+
+intended_data_dict = {
+    "alpha": alpha,
+    "beta": beta,
+    "delta": delta
+}
+
+def main():
+
+    parser = argparse.ArgumentParser(description="Process some data and run the algorithm.")
+
+    # Add arguments for the algorithm and data
+    parser.add_argument('-a', '--algorithm', type=str, required=True, help="Name of the algorithm to use")
+    parser.add_argument('-d', '--data', type=str, required=True, help="Subsection of data to process")
+    
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Extract the algorithm from arguments
+    algorithm = args.algorithm
+    intended_data = args.data
+
+    config = intended_data_dict[intended_data]
+
+    csv_title = config["csv_title"]
+    data_title = config["data_title"]
+    subsection_start = config["subsection_start"]
+    subsection_end = config["subsection_end"]
+    data_column = config["data_column"]
+    context_window_length = config["context_window_length"]
+    prediction_length = config["prediction_length"]
 
     df = pd.read_csv(f"{DATA_FOLDER}/{csv_title}.csv")
     df_to_slide_on = df[subsection_start:subsection_end]
@@ -24,12 +77,10 @@ def kickoff_sliding_window():
     minimum_running_length = context_window_length + prediction_length
     #df_to_slide_on = df[:minimum_running_length]
 
+    results = utils.sliding_window_analysis_for_algorithm(algorithm,data_title, df_to_slide_on,data_column,context_window_length,prediction_length)
 
-    #results = utils.sliding_window_analysis_for_algorithm("chronos_tiny",data_title, df_to_slide_on,data_column,context_window_length,prediction_length)
-    results = utils.sliding_window_analysis_for_algorithm("sarima",data_title, df_to_slide_on,data_column,context_window_length,prediction_length)
-    # results = utils.sliding_window_analysis_for_algorithm("sarima",data_title, df_to_slide_on,data_column,context_window_length,prediction_length)
-
-kickoff_sliding_window()
+if __name__ == "__main__":
+    main()
 # - - - - - - - - - - - - - - - - - - 
 # System prices - START
 # 
