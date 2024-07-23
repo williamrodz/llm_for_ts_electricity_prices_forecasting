@@ -6,7 +6,6 @@ ampltools
 amply
 annotated-types
 appnope
-appscript
 asttokens
 attrs
 Babel
@@ -45,7 +44,6 @@ geographiclib
 geopandas
 geopy
 gluonts
-GPy
 grpcio
 gym
 gym-notices

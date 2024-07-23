@@ -26,7 +26,7 @@ def kickoff_sliding_window():
 
 
     #results = utils.sliding_window_analysis_for_algorithm("chronos_tiny",data_title, df_to_slide_on,data_column,context_window_length,prediction_length)
-    results = utils.sliding_window_analysis_for_algorithm("gp",data_title, df_to_slide_on,data_column,context_window_length,prediction_length)
+    results = utils.sliding_window_analysis_for_algorithm("sarima",data_title, df_to_slide_on,data_column,context_window_length,prediction_length)
     # results = utils.sliding_window_analysis_for_algorithm("sarima",data_title, df_to_slide_on,data_column,context_window_length,prediction_length)
 
 kickoff_sliding_window()
