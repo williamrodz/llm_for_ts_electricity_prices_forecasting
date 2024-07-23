@@ -1,8 +1,6 @@
 absl-py
 accelerate
 alabaster
-ampl-module-base
-ampl-module-cbc
 amplpy
 ampltools
 amply
@@ -20,7 +18,6 @@ certifi
 cffi
 chardet
 charset-normalizer
-chronos
 click
 click-plugins
 cligj
