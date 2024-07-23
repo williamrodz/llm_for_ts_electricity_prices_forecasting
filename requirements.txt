@@ -19,7 +19,6 @@ branca==0.7.1
 certifi==2023.11.17
 chardet==5.2.0
 charset-normalizer==3.3.2
-chronos @ git+https://github.com/amazon-science/chronos-forecasting.git@55166d3227c91554653397068cba13c02589ea4d
 click==8.1.7
 click-plugins==1.1.1
 cligj==0.7.2
