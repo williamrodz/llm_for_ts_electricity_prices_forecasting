@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from constants import *
 
-def gp_predict(df, column, date_column, training_start_index, training_end_index, prediction_length,plot=True):
+def gp_predict(df, column, training_start_index, training_end_index, prediction_length,plot=True):
   # Check for string date
   if isinstance(training_start_index, str) or isinstance(training_end_index, str):
     raise ValueError("Both training_start_index and training_end_index must be integers")
