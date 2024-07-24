@@ -1,3 +1,5 @@
+git config --global user.name "AWS VM"
+git config --global user.email "william.a@alum.mit.edu"
 conda install --yes --file requirements.txt
 conda install matplotlib
 conda install pmdarima
