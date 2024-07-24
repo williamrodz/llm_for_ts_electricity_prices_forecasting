@@ -171,9 +171,9 @@ def sliding_window_analysis(df,column,context_length,prediction_length):
 def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_length, prediction_length,plot=False):
   num_possible_iterations = len(df) - context_length - prediction_length + 1
   cum_mse = 0
-  ledger_mse = []
+  ledger_mse = np.array([])
   cum_nmse = 0
-  ledger_nmse = []
+  ledger_nmse = np.array([])
 
   if algo.startswith("chronos_"):
     # Extract the part after "chronos_"
@@ -245,12 +245,12 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
       mse = calculate_mse(actual_values, algo_predictions)
       if not np.isnan(mse):
         cum_mse += mse
-      ledger_mse.append(mse)
+      np.append(ledger_mse,mse)
 
       nmse = calculate_nmse(actual_values, algo_predictions)
       if not np.isnan(nmse):
         cum_nmse += nmse
-      ledger_nmse.append(nmse)
+      np.append(ledger_nmse,nmse)
 
       if not np.isnan(mse) and not np.isnan(nmse):
         num_successful_runs += 1

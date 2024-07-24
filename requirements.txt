@@ -169,7 +169,6 @@ texttable
 threadpoolctl
 tokenizers
 toolz
-torch
 tornado
 tqdm
 traitlets

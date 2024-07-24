@@ -41,7 +41,7 @@ delta = {
     "csv_title": "agile_octopus_london",
     "data_title": "agile_octopus_london_delta_3_months",
     "subsection_start": 8930,
-    "subsection_end": 13396,
+    "subsection_end": 13395,
     "data_column": "Price_Ex_VAT",
     "context_window_length": 7 * 48,
     "prediction_length": 48
