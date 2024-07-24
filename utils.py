@@ -25,8 +25,10 @@ class NumpyEncoder(json.JSONEncoder):
 
 # Function to save dictionary as a JSON file
 def save_dict_to_json(dictionary, file_path):
-    with open(file_path, 'w') as json_file:
-        json.dump(dictionary, json_file, indent=4, cls=NumpyEncoder)
+  with open(file_path, 'w') as json_file:
+    json.dump(dictionary, json_file, indent=4, cls=NumpyEncoder)
+    print(f"Saving results to:\n{file_path}")
+
 
 def calculate_mse(actual_values, predicted_values):
   cum_sum_of_errors = 0
