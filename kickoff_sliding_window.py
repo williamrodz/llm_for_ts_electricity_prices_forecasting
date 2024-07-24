@@ -81,7 +81,7 @@ def main():
 
     # For debugging
     minimum_running_length = context_window_length + prediction_length
-    df_to_slide_on = df[:minimum_running_length]
+    #df_to_slide_on = df[:minimum_running_length]
 
     results = utils.sliding_window_analysis_for_algorithm(algorithm,data_title, df_to_slide_on,data_column,context_window_length,prediction_length)
 
