@@ -264,8 +264,8 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   elapsed_hours = elapsed_seconds / 3600
 
   # Mean MSE and NMSE
-  mean_mse = np.mean(ledger_mse)
-  mean_nmse = np.mean(ledger_nmse)
+  mean_mse = np.mean(ledger_mse[~np.isnan(ledger_mse)])
+  mean_nmse = np.mean(ledger_nmse[~np.isnan(ledger_nmse)])
 
   # Save results in a txt file
   algo_results = {
