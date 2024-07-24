@@ -1,0 +1,17 @@
+{
+    "algorithm": "chronos_mini",
+    "context_length": 336,
+    "prediction_length": 48,
+    "data_title": "agile_octopus_london_alpha_3_months",
+    "dataset_length": 4465,
+    "elapsed_hours": 1.3026941408051385,
+    "cum_mse": 143989.48100479887,
+    "cum_nmse": 10406.55834945431,
+    "mean_mse": NaN,
+    "mean_nmse": NaN,
+    "num_possible_iterations": 4082,
+    "num_successful_runs": 3986,
+    "successful_run_percentage": 97.64821166095051,
+    "ledger_mse": [],
+    "ledger_nmse": []
+}

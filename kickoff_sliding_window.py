@@ -7,14 +7,12 @@ import json
 from constants import *
 import argparse
 
-
 '''
 Agile_Octopus_London.csv
 - 31,208 time steps/ 1.78 years of per kwh, each representing a half hour price
-- Alpha : 0 -> 10,402 (217 days, 10,416 samples)
-- Alpha : 0 -> 10,402 (217 days, 10,416 samples)
-- Beta : 10,403 -> 20,805 (217 days, 10,416 samples)
-- Gamma: 20,806 -> 31,208 (217 days, 10,416 samples)
+- alpha: 0 -> 4465 (3 months, 4464 samples)
+- beta: 4465 -> 8930 (3 months, 4464 samples)
+- delta: 8930 -> 13395 (3 months, 4464 samples)
 '''
  
 alpha = {
@@ -83,7 +81,7 @@ def main():
 
     # For debugging
     minimum_running_length = context_window_length + prediction_length
-    #df_to_slide_on = df[:minimum_running_length]
+    df_to_slide_on = df[:minimum_running_length]
 
     results = utils.sliding_window_analysis_for_algorithm(algorithm,data_title, df_to_slide_on,data_column,context_window_length,prediction_length)
 
