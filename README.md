@@ -75,6 +75,12 @@ To install the necessary dependencies for this project, follow these steps:
 
 3. **Install the dependencies**: Run the following command to install all the required packages listed in the `requirements.txt` file:
 
+    With Anaconda
+    ```sh
+    bash install_reqs.sh
+    ```
+    
+    Without Anaconda
     ```sh
     pip install -r requirements.txt
     ```
