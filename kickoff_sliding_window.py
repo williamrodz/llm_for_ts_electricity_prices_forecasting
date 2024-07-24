@@ -10,9 +10,10 @@ import argparse
 '''
 Agile_Octopus_London.csv
 - 31,208 time steps/ 1.78 years of per kwh, each representing a half hour price
-- alpha: 0 -> 1488 (1 month, 1488 samples)
-- beta: 1488 -> 2976 (1 month, 1488 samples)
-- delta: 2976 -> 3464 (1 month, 1488 samples)
+- alpha: 0 -> 672 (2 weeks, 672 samples)
+- beta: 672 -> 1344 (2 weeks, 672 samples)
+- delta: 1344 -> 2016 (2 weeks, 672 samples)
+
 
 '''
  
@@ -20,7 +21,7 @@ alpha = {
     "csv_title": "agile_octopus_london",
     "data_title": "agile_octopus_london_alpha_3_months",
     "subsection_start": 0,
-    "subsection_end": 1488,
+    "subsection_end": 672,
     "data_column": "Price_Ex_VAT",
     "context_window_length": 7 * 48,
     "prediction_length": 48
@@ -29,8 +30,8 @@ alpha = {
 beta = {
     "csv_title": "agile_octopus_london",
     "data_title": "agile_octopus_london_beta_3_months",
-    "subsection_start": 1488,
-    "subsection_end": 2976,
+    "subsection_start": 672,
+    "subsection_end": 1344,
     "data_column": "Price_Ex_VAT",
     "context_window_length": 7 * 48,
     "prediction_length": 48
@@ -39,8 +40,8 @@ beta = {
 delta = {
     "csv_title": "agile_octopus_london",
     "data_title": "agile_octopus_london_delta_3_months",
-    "subsection_start": 2976,
-    "subsection_end": 3464,
+    "subsection_start": 1344,
+    "subsection_end": 2016,
     "data_column": "Price_Ex_VAT",
     "context_window_length": 7 * 48,
     "prediction_length": 48
