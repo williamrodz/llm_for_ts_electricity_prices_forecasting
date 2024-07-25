@@ -172,9 +172,8 @@ def sliding_window_analysis(df,column,context_length,prediction_length):
 
 def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_length, prediction_length,plot=False):
   num_possible_iterations = len(df) - context_length - prediction_length + 1
-  cum_mse = 0
+
   ledger_mse = np.array([])
-  cum_nmse = 0
   ledger_nmse = np.array([])
 
   if algo.startswith("chronos_"):
@@ -215,17 +214,10 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
 
       # Obtain predictions
       algo_predictions = None
- 
-      if algo.startswith("chronos_"):
-        algo_predictions = chronos_predict(
-          df,
-          column,
-          context_start,context_finish,
-          prediction_length,
-          plot=plot,
-          pipeline=pipeline
-          )
 
+      # Summon designated algorithm
+      if algo.startswith("chronos_"):
+        algo_predictions = chronos_predict(df, column, context_start, context_finish, prediction_length, plot=plot, pipeline=pipeline)
       elif algo == "sarima":
         algo_predictions = sarima_predict(df,column,context_start, context_finish,prediction_length,plot=plot)
       elif algo == "gp":
@@ -242,16 +234,12 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
       n_actual_values = len(actual_values)
 
       if not n_actual_values == n_predictions:
-        raise ValueError(f"Unequal lengths {n_actual_values} != {n_predictions}")
+        raise ValueError(f"Unequal lengths of prediction and actual values ({n_actual_values} != {n_predictions})")
       
       mse = calculate_mse(actual_values, algo_predictions)
-      if not np.isnan(mse):
-        cum_mse += mse
       ledger_mse = np.append(ledger_mse,mse)
 
       nmse = calculate_nmse(actual_values, algo_predictions)
-      if not np.isnan(nmse):
-        cum_nmse += nmse
       ledger_nmse = np.append(ledger_nmse,nmse)
 
       if not np.isnan(mse) and not np.isnan(nmse):
@@ -271,21 +259,19 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
 
   # Save results in a txt file
   algo_results = {
-    "algorithm":algo,
-    "context_length":context_length,
-    "prediction_length":prediction_length,
-    "data_title":data_title,
-    "dataset_length":len(df),
-    "elapsed_hours":elapsed_hours,
-    "cum_mse":cum_mse,
-    "cum_nmse":cum_nmse,
-    "mean_mse":mean_mse,
-    "mean_nmse":mean_nmse,
-    "num_possible_iterations":num_possible_iterations,
-    "num_successful_runs":num_successful_runs,
+    "algorithm": algo,
+    "data_title": data_title,
+    "dataset_length": len(df),
+    "context_length": context_length,
+    "prediction_length": prediction_length,
     "successful_run_percentage": num_successful_runs / num_possible_iterations * 100,
-    "ledger_mse":ledger_mse,
-    "ledger_nmse":ledger_nmse,    
+    "mean_mse": mean_mse,
+    "mean_nmse": mean_nmse,
+    "elapsed_hours": elapsed_hours,
+    "num_possible_iterations": num_possible_iterations,
+    "num_successful_runs": num_successful_runs,
+    "ledger_mse": ledger_mse,
+    "ledger_nmse": ledger_nmse,    
     }
   output_message = f"\nResults for {algo}:\n"
 
