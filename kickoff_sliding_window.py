@@ -19,7 +19,7 @@ Agile_Octopus_London.csv
  
 alpha = {
     "csv_title": "agile_octopus_london",
-    "data_title": "agile_octopus_london_alpha_3_months",
+    "data_title": "agile_octopus_london_alpha_2_weeks",
     "subsection_start": 0,
     "subsection_end": 672,
     "data_column": "Price_Ex_VAT",
@@ -29,7 +29,7 @@ alpha = {
 
 beta = {
     "csv_title": "agile_octopus_london",
-    "data_title": "agile_octopus_london_beta_3_months",
+    "data_title": "agile_octopus_london_beta_2_weeks",
     "subsection_start": 672,
     "subsection_end": 1344,
     "data_column": "Price_Ex_VAT",
@@ -39,7 +39,7 @@ beta = {
 
 delta = {
     "csv_title": "agile_octopus_london",
-    "data_title": "agile_octopus_london_delta_3_months",
+    "data_title": "agile_octopus_london_delta_2_weeks",
     "subsection_start": 1344,
     "subsection_end": 2016,
     "data_column": "Price_Ex_VAT",

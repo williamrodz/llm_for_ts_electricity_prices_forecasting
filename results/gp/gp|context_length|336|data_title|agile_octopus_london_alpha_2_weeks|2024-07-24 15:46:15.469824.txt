@@ -2,7 +2,7 @@
     "algorithm": "gp",
     "context_length": 336,
     "prediction_length": 48,
-    "data_title": "agile_octopus_london_alpha_3_months",
+    "data_title": "agile_octopus_london_alpha_2_weeks",
     "dataset_length": 672,
     "elapsed_hours": 0.685528324842453,
     "cum_mse": 19589.51157276277,

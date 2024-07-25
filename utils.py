@@ -2,10 +2,10 @@ import pandas as pd
 import numpy as np
 import torch
 from chronos import ChronosPipeline
-from chronos_wrapper import chronos_predict
-from sarima_wrapper import sarima_predict
-from gp_wrapper import gp_predict
-from lstm_wrapper import lstm_predict
+from wrappers.chronos_wrapper import chronos_predict
+from wrappers.sarima_wrapper import sarima_predict
+from wrappers.gp_wrapper import gp_predict
+from wrappers.lstm_wrapper import lstm_predict
 from tqdm import tqdm
 from constants import *
 import json
@@ -299,7 +299,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   timestamp = pd.Timestamp.now()
   # Create the directory if it doesn't exist
   os.makedirs(f"{RESULTS_FOLDER_NAME}/{algo}", exist_ok=True)  
-  file_name = f"{RESULTS_FOLDER_NAME}/{algo}/{algo}|context_length|{context_length}|data_title|{data_title}|{timestamp}.txt"
+  file_name = f"{RESULTS_FOLDER_NAME}/{algo}/data_title|{data_title}|cl|{context_length}|pl|{prediction_length}|algo|{algo}|ts|{timestamp}.txt"
   save_dict_to_json(algo_results, file_name)
 
   return algo_results

@@ -1,8 +1,6 @@
 import pandas as pd
-from chronos_wrapper import chronos_predict
+from wrappers.chronos_wrapper import chronos_predict
 import matplotlib.pyplot as plt
-
-
 
 def preprocess_series(series, window_size=3):
     # Ensure the length of the series is a multiple of window_size
