@@ -40,6 +40,28 @@ def calculate_mse(actual_values, predicted_values):
   mse = cum_sum_of_errors / n
   return mse
 
+def calculate_log_likelihood(y_true, y_pred):
+    """
+    Calculate the log likelihood of the predicted values given the true values.
+    
+    The log likelihood is calculated using the formula:
+    
+    log_likelihood = -0.5 * (n * log(2 * pi) + n * log(variance) + sum((y_true - y_pred) ** 2) / variance)
+    
+    :param y_true: array-like, true values
+    :param y_pred: array-like, predicted values
+    :return: float, log likelihood
+    """
+    y_true = np.asarray(y_true)
+    y_pred = np.asarray(y_pred)
+    
+    n = len(y_true)
+    variance = np.var(y_true)
+    
+    log_likelihood = -0.5 * (n * np.log(2 * np.pi) + n * np.log(variance) + np.sum((y_true - y_pred) ** 2) / variance)
+    
+    return log_likelihood
+
 def calculate_nmse(y_true, y_pred):
     """
     Calculate the Normalized Mean Square Error (NMSE).
@@ -175,6 +197,9 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
 
   ledger_mse = np.array([])
   ledger_nmse = np.array([])
+  ledger_logl = np.array([])
+  ledger_var_actual_values = np.array([])
+  ledger_var_predictions = np.array([])
 
   if algo.startswith("chronos_"):
     # Extract the part after "chronos_"
@@ -236,22 +261,43 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
       if not n_actual_values == n_predictions:
         raise ValueError(f"Unequal lengths of prediction and actual values ({n_actual_values} != {n_predictions})")
       
+      # Calculate Mean Square Error
       mse = calculate_mse(actual_values, algo_predictions)
       ledger_mse = np.append(ledger_mse,mse)
 
+      # Calculate Normalized Mean Square Error
       nmse = calculate_nmse(actual_values, algo_predictions)
       ledger_nmse = np.append(ledger_nmse,nmse)
+
+      # Calculate Log Likelihood
+      log_likelihood = calculate_log_likelihood(actual_values, algo_predictions)
+      ledger_logl = np.append(ledger_logl,log_likelihood)
+
+      # Calculate Variance of Actual Values
+      variance_actual_values = np.var(actual_values)
+      ledger_var_actual_values = np.append(ledger_var_actual_values,variance_actual_values)
+
+      # Calculate Variance of Predictions
+      variance_predictions = np.var(algo_predictions)
+      ledger_var_predictions = np.append(ledger_var_predictions,variance_predictions)
 
       if not np.isnan(mse) and not np.isnan(nmse):
         num_successful_runs += 1
 
-  end_time = time.time()
 
   # Calculate elapsed time in seconds
+  end_time = time.time()  
   elapsed_seconds = end_time - start_time
 
   # Convert elapsed time to hours
   elapsed_hours = elapsed_seconds / 3600
+
+
+  # Calculate dataset statistics
+  dataset_length = len(df)
+  dataset_variance = np.var(df[column])
+  data_set_mean = np.mean(df[column])
+
 
   # Mean MSE and NMSE
   mean_mse = np.mean(ledger_mse[~np.isnan(ledger_mse)])
@@ -261,7 +307,9 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   algo_results = {
     "algorithm": algo,
     "data_title": data_title,
-    "dataset_length": len(df),
+    "dataset_length": dataset_length,
+    "dataset_mean": data_set_mean,
+    "dataset_variance": dataset_variance,
     "context_length": context_length,
     "prediction_length": prediction_length,
     "successful_run_percentage": num_successful_runs / num_possible_iterations * 100,
@@ -271,7 +319,8 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
     "num_possible_iterations": num_possible_iterations,
     "num_successful_runs": num_successful_runs,
     "ledger_mse": ledger_mse,
-    "ledger_nmse": ledger_nmse,    
+    "ledger_nmse": ledger_nmse,
+    "ledger_logl": ledger_logl,      
     }
   output_message = f"\nResults for {algo}:\n"
 

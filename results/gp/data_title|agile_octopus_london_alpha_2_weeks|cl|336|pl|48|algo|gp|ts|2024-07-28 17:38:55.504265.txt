@@ -1,0 +1,33 @@
+{
+    "algorithm": "gp",
+    "data_title": "agile_octopus_london_alpha_2_weeks",
+    "dataset_length": 387,
+    "dataset_mean": 29.48976744186047,
+    "dataset_variance": 162.38981519139477,
+    "context_length": 336,
+    "prediction_length": 48,
+    "successful_run_percentage": 100.0,
+    "mean_mse": 151.50111827660143,
+    "mean_nmse": 1.3432922412812076,
+    "elapsed_hours": 0.008052185773849488,
+    "num_possible_iterations": 4,
+    "num_successful_runs": 4,
+    "ledger_mse": [
+        238.24654737444985,
+        77.15575104447912,
+        71.34447599903136,
+        219.25769868844534
+    ],
+    "ledger_nmse": [
+        2.1605524871174073,
+        0.6859559651642503,
+        0.6334392844904264,
+        1.8932212283527468
+    ],
+    "ledger_logl": [
+        -208.83291922285795,
+        -173.9184238876355,
+        -172.6902575000462,
+        -203.59359137297687
+    ]
+}
