@@ -42,3 +42,6 @@ __pycache__/*.pyc
 
 # Excel Cache
 ~$*
+
+# So that cuda is not overwitten in the VM
+constants.py
