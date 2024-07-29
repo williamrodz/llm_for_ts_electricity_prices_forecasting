@@ -8,7 +8,7 @@ def read_log_file(file_path):
     return log_text
 
 # Path to the log file
-file_name = 'chronos-t5-tiny-336-48-alpha'
+file_name = 'chronos-tiny-336-48-8_000-delta'
 log_file_path = f'training_logs/{file_name}.txt'
 
 # Read the log text from the file
