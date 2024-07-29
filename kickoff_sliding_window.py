@@ -53,6 +53,18 @@ intended_data_dict = {
     "delta": delta
 }
 
+def generate_data_subsection_csvs():
+    df = pd.read_csv(f"{DATA_FOLDER}/agile_octopus_london.csv")
+    for key in intended_data_dict:
+        config = intended_data_dict[key]
+        subsection_start = config["subsection_start"]
+        subsection_end = config["subsection_end"]
+        csv_title = config["csv_title"]
+        data_title = config["data_title"]
+        data_column = config["data_column"]
+        df_to_slide_on = df[subsection_start:subsection_end]
+        df_to_slide_on.to_csv(f"{DATA_FOLDER}/{data_title}.csv", index=False)
+
 def main():
 
     parser = argparse.ArgumentParser(description="Process some data and run the algorithm.")
@@ -60,9 +72,15 @@ def main():
     # Add arguments for the algorithm and data
     parser.add_argument('-a', '--algorithm', type=str, required=True, help="Name of the algorithm to use")
     parser.add_argument('-d', '--data', type=str, required=True, help="Subsection of data to process")
-    
+    parser.add_argument('-g', '--generate', action='store_true', help="Generate subsection csvs")
+
     # Parse the arguments
     args = parser.parse_args()
+
+    if args.generate:
+        generate_data_subsection_csvs()
+        return
+    
 
     # Extract the algorithm from arguments
     algorithm = args.algorithm
