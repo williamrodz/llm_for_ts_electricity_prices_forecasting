@@ -202,12 +202,12 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   ledger_var_actual_values = np.array([])
   ledger_var_predictions = np.array([])
 
-  if algo.startswith("chronos_"):
+  if algo.startswith("chronos_") or algo.startswith("chronos-"):
     # Extract the part after "chronos_"
-    suffix = algo[len("chronos_"):]
+    suffix = algo[len("chronos"):]
     
     # Define the valid sizes
-    valid_chronos_sizes = {"tiny", "mini", "small", "base", "large"}
+    valid_chronos_sizes = {"_tiny", "_mini", "_small", "_base", "_large"}
     
     if suffix in valid_chronos_sizes:
       #initialize chronos pipeline
@@ -218,6 +218,14 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
       device_map=DEVICE_MAP,  
       torch_dtype=torch.bfloat16,
       )
+    elif suffix.startswith("-"):
+      print("= = = = >")
+      print(f"Initializing CUSTOM Chronos {suffix} pipeline...\n")
+      pipeline = ChronosPipeline.from_pretrained(
+      f"froyoresearcher/{algo}",
+      device_map=DEVICE_MAP,  
+      torch_dtype=torch.bfloat16,
+      )      
     else:
       raise ValueError(f"Invalid Chronos model size: {suffix}. Valid sizes are: {valid_chronos_sizes}")
   welcome_message = "- - - - - - - - -- - - - - - - - - - - - - - - \n"
@@ -242,7 +250,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
       algo_predictions = None
 
       # Summon designated algorithm
-      if algo.startswith("chronos_"):
+      if algo.startswith("chronos"):
         algo_predictions = chronos_predict(df, column, context_start, context_finish, prediction_length, plot=plot, pipeline=pipeline)
       elif algo == "sarima":
         algo_predictions = sarima_predict(df,column,context_start, context_finish,prediction_length,plot=plot)
@@ -354,25 +362,16 @@ def compare_prediction_methods(df, data_column, date_column, context_start, cont
   
   joint_results = {}
   for method in methods:
-    if method.startswith("chronos_"):
-      # Extract the part after "chronos_"
-      chronos_version = method[len("chronos_"):]
-      
-      # Define the valid sizes
-      valid_chronos_sizes = {"tiny", "mini", "small", "base", "large"}
-      
-      if chronos_version in valid_chronos_sizes:
-        chronos_predictions = chronos_predict(
-          df,
-          data_column,
-          context_start,context_finish,
-          prediction_length,
-          plot=plot,
-          version=chronos_version
-          )
-        joint_results[method] = {"predictions":chronos_predictions}
-      else:
-        raise ValueError(f"Invalid Chronos model size: {chronos_version}. Valid sizes are: {valid_chronos_sizes}")
+    if method.startswith("chronos"):
+      chronos_predictions = chronos_predict(
+        df,
+        data_column,
+        context_start,context_finish,
+        prediction_length,
+        plot=plot,
+        version=method
+        )
+      joint_results[method] = {"predictions":chronos_predictions}
     elif method == "sarima":
       sarima_predictions = sarima_predict(
         df,

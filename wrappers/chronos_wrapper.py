@@ -48,29 +48,23 @@ def chronos_predict(
     # Initialize pipeline if not provided
     if pipeline is None:
       print(f"= = = > Chronos pipeline not initialized. Firing up {version} pipeline. May take time..")
-      pipeline = ChronosPipeline.from_pretrained(
-          f"amazon/chronos-t5-{version}",
+      print(f"Version is {version}")
+      if "-" in version:
+        # This is a custom model
+        pipeline = ChronosPipeline.from_pretrained(
+          f"froyoresearcher/{version}",
           device_map=DEVICE_MAP,  
           torch_dtype=torch.bfloat16,
-      )
+        )
+      else:
+        # Cut out the chronos leading text
+        chronos_version = version.split("_")[-1]
+        pipeline = ChronosPipeline.from_pretrained(
+            f"amazon/chronos-t5-{chronos_version}",
+            device_map=DEVICE_MAP,  
+            torch_dtype=torch.bfloat16,
+        )
 
-    # print(" -------- PREDICT RUN ---------")
-    # print("Parameters are:")
-    # print(f"""
-    # input_data: {len(input_data)}\n
-    # context_range: {context_range}\n
-    # prediction_length: {prediction_length}\n
-    # autoregressions: {(autoregressions)}\n
-    # median_predictions: {len(median_predictions)}\n
-    # low_predictions: {len(low_predictions)}\n
-    # high_predictions: {len(high_predictions)}\n
-    # initial_context_start: {initial_context_start}\n
-    # initial_context_end: {initial_context_end}\n
-
-    # """)
-    # print("----------")
-    # print("")
-    
     # Determine size of input time series
     n = len(input_data)
 
@@ -84,7 +78,8 @@ def chronos_predict(
     forecast = pipeline.predict(
         context=context_data_tensor,
         prediction_length=prediction_length,
-        num_samples=CHRONOS_NUM_SAMPLES_DEFAULT
+        num_samples=CHRONOS_NUM_SAMPLES_DEFAULT,
+        limit_prediction_length=False
     )
 
     # Get the quantiles for the prediction interval

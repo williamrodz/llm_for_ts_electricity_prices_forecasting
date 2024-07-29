@@ -105,7 +105,8 @@ def chronos_predict(
     forecast = pipeline.predict(
         context=context_data_tensor,
         prediction_length=prediction_length,
-        num_samples=CHRONOS_NUM_SAMPLES_DEFAULT
+        num_samples=CHRONOS_NUM_SAMPLES_DEFAULT,
+        limit_prediction_length=False
     )
 
     # Get the quantiles for the prediction interval
