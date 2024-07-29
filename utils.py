@@ -4,6 +4,7 @@ import torch
 from chronos import ChronosPipeline
 from wrappers.chronos_wrapper import chronos_predict
 from wrappers.sarima_wrapper import sarima_predict
+from wrappers.arima_wrapper import arima_predict
 from wrappers.gp_wrapper import gp_predict
 from wrappers.lstm_wrapper import lstm_predict
 from tqdm import tqdm
@@ -339,7 +340,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
 
   return algo_results
 
-def compare_prediction_methods(df, data_column, date_column, context_start, context_finish, prediction_length, plot=True,methods=["chronos_mini","gp","sarima","lstm"]):
+def compare_prediction_methods(df, data_column, date_column, context_start, context_finish, prediction_length, plot=True,methods=["chronos_mini","arima","sarima","gp","lstm"]):
   # convert dates to an integer index
   if type(context_start) == str:
     context_start = find_first_occurrence_index(df, context_start, date_column)
@@ -380,8 +381,18 @@ def compare_prediction_methods(df, data_column, date_column, context_start, cont
         plot=plot
         )
       joint_results[method] = {"predictions":sarima_predictions}
+    elif method == "arima":
+      arima_predictions = arima_predict(
+        df,
+        data_column,
+        context_start,
+        context_finish,
+        prediction_length,
+        plot=plot
+        )
+      joint_results[method] = {"predictions":arima_predictions}      
     elif method == "gp":
-      gp_predictions = gp_predict(df, data_column, date_column, context_start, context_finish, prediction_length, plot=plot)
+      gp_predictions = gp_predict(df, data_column, context_start, context_finish, prediction_length, plot=plot)
       joint_results[method] = {"predictions":gp_predictions}
     elif method == "lstm":
       lstm_predictions = lstm_predict(df, data_column, context_start, context_finish, prediction_length, plot=plot)

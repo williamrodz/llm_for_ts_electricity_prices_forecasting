@@ -18,7 +18,7 @@ def sarima_predict(df, column, training_start_index,training_end_index, predicti
   if column == 'Daily average':
     seasonal_period = 1
   elif column == 'Price_Ex_VAT':
-    seasonal_period = 24
+    seasonal_period = 1
   else:
     raise ValueError("Unrecognized column name, cannont provide seasonal period")
 
