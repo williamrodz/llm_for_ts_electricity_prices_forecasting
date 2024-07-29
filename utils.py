@@ -246,6 +246,8 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
         algo_predictions = chronos_predict(df, column, context_start, context_finish, prediction_length, plot=plot, pipeline=pipeline)
       elif algo == "sarima":
         algo_predictions = sarima_predict(df,column,context_start, context_finish,prediction_length,plot=plot)
+      elif algo == "arima":
+        algo_predictions = arima_predict(df,column,context_start, context_finish,prediction_length,plot=plot)        
       elif algo == "gp":
           algo_predictions = gp_predict(df,column, context_start, context_finish, prediction_length, plot=plot)
       else:
