@@ -41,7 +41,7 @@ def calculate_mse(actual_values, predicted_values):
   mse = cum_sum_of_errors / n
   return mse
 
-def calculate_log_likelihood(y_true, y_pred):
+def calculate_log_likelihood(y_true, y_pred, sigma):
     """
     Calculate the log likelihood of the predicted values given the true values.
     
@@ -53,13 +53,23 @@ def calculate_log_likelihood(y_true, y_pred):
     :param y_pred: array-like, predicted values
     :return: float, log likelihood
     """
+    all_same_length = len(y_true) == len(y_pred) == len(sigma)
+    if not all_same_length:
+      raise ValueError("y_true, y_pred, and sigma must have the same length.")
+
     y_true = np.asarray(y_true)
     y_pred = np.asarray(y_pred)
+
+    if sigma is None:
+      raise ValueError("Sigma must be provided for log likelihood calculation.")
+      # raising an error instead of defaulting to make sure we don't assume uniform variance
+      # variance = np.var(y_true)
+    else:
+      variances = np.asarray(sigma) ** 2
     
     n = len(y_true)
-    variance = np.var(y_true)
     
-    log_likelihood = -0.5 * (n * np.log(2 * np.pi) + n * np.log(variance) + np.sum((y_true - y_pred) ** 2) / variance)
+    log_likelihood = -0.5 * (np.sum(np.log(2 * np.pi * variances) + (y_true - y_pred) ** 2 / variances))
     
     return log_likelihood
 
@@ -203,22 +213,25 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   ledger_var_predictions = np.array([])
 
   if algo.startswith("chronos_") or algo.startswith("chronos-"):
-    # Extract the part after "chronos_"
-    suffix = algo[len("chronos"):]
+    valid_chronos_sizes = {"tiny", "mini", "small", "base", "large"}
+
+    if algo.startswith("chronos_"):
+      # Extract the part after "chronos_"
+      suffix = algo[len("chronos_"):]
+
+      if suffix in valid_chronos_sizes:
+        #initialize chronos pipeline
+        print("= = = = >")
+        print(f"Initializing Chronos {suffix} pipeline...\n")
+        pipeline = ChronosPipeline.from_pretrained(
+        f"amazon/chronos-t5-{suffix}",
+        device_map=DEVICE_MAP,  
+        torch_dtype=torch.bfloat16,
+        )
+      else:
+        raise ValueError(f"Invalid Chronos model size: {suffix}. Valid sizes are: {valid_chronos_sizes}")   
     
-    # Define the valid sizes
-    valid_chronos_sizes = {"_tiny", "_mini", "_small", "_base", "_large"}
-    
-    if suffix in valid_chronos_sizes:
-      #initialize chronos pipeline
-      print("= = = = >")
-      print(f"Initializing Chronos {suffix} pipeline...\n")
-      pipeline = ChronosPipeline.from_pretrained(
-      f"amazon/chronos-t5-{suffix}",
-      device_map=DEVICE_MAP,  
-      torch_dtype=torch.bfloat16,
-      )
-    elif suffix.startswith("-"):
+    elif "-" in algo:
       print("= = = = >")
       print(f"Initializing CUSTOM Chronos {suffix} pipeline...\n")
       pipeline = ChronosPipeline.from_pretrained(
@@ -248,16 +261,17 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
 
       # Obtain predictions
       algo_predictions = None
+      algo_sigma = None
 
       # Summon designated algorithm
       if algo.startswith("chronos"):
-        algo_predictions = chronos_predict(df, column, context_start, context_finish, prediction_length, plot=plot, pipeline=pipeline)
+        algo_predictions, algo_sigma = chronos_predict(df, column, context_start, context_finish, prediction_length, plot=plot, pipeline=pipeline)
       elif algo == "sarima":
         algo_predictions = sarima_predict(df,column,context_start, context_finish,prediction_length,plot=plot)
       elif algo == "arima":
-        algo_predictions = arima_predict(df,column,context_start, context_finish,prediction_length,plot=plot)        
+        algo_predictions, algo_sigma = arima_predict(df,column,context_start, context_finish,prediction_length,plot=plot)        
       elif algo == "gp":
-          algo_predictions = gp_predict(df,column, context_start, context_finish, prediction_length, plot=plot)
+          algo_predictions, algo_sigma = gp_predict(df,column, context_start, context_finish, prediction_length, plot=plot)
       else:
         raise ValueError(f"Invalid algorithm {algo}")
       
@@ -281,7 +295,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
       ledger_nmse = np.append(ledger_nmse,nmse)
 
       # Calculate Log Likelihood
-      log_likelihood = calculate_log_likelihood(actual_values, algo_predictions)
+      log_likelihood = calculate_log_likelihood(actual_values, algo_predictions, algo_sigma)
       ledger_logl = np.append(ledger_logl,log_likelihood)
 
       # Calculate Variance of Actual Values
@@ -363,15 +377,8 @@ def compare_prediction_methods(df, data_column, date_column, context_start, cont
   joint_results = {}
   for method in methods:
     if method.startswith("chronos"):
-      chronos_predictions = chronos_predict(
-        df,
-        data_column,
-        context_start,context_finish,
-        prediction_length,
-        plot=plot,
-        version=method
-        )
-      joint_results[method] = {"predictions":chronos_predictions}
+      chronos_predictions, chronos_sigma = chronos_predict(df, data_column, context_start,context_finish, prediction_length, plot=plot, version=method)
+      joint_results[method] = {"predictions":chronos_predictions, "sigma":chronos_sigma}
     elif method == "sarima":
       sarima_predictions = sarima_predict(
         df,
@@ -383,18 +390,11 @@ def compare_prediction_methods(df, data_column, date_column, context_start, cont
         )
       joint_results[method] = {"predictions":sarima_predictions}
     elif method == "arima":
-      arima_predictions = arima_predict(
-        df,
-        data_column,
-        context_start,
-        context_finish,
-        prediction_length,
-        plot=plot
-        )
-      joint_results[method] = {"predictions":arima_predictions}      
+      arima_predictions, arima_sigma = arima_predict(df, data_column, context_start, context_finish, prediction_length, plot=plot)
+      joint_results[method] = {"predictions":arima_predictions, "sigma":arima_sigma}
     elif method == "gp":
-      gp_predictions = gp_predict(df, data_column, context_start, context_finish, prediction_length, plot=plot)
-      joint_results[method] = {"predictions":gp_predictions}
+      gp_predictions, gp_sigma = gp_predict(df, data_column, context_start, context_finish, prediction_length, plot=plot)
+      joint_results[method] = {"predictions":gp_predictions, "sigma":gp_sigma}
     elif method == "lstm":
       lstm_predictions = lstm_predict(df, data_column, context_start, context_finish, prediction_length, plot=plot)
       joint_results[method] = {"predictions":lstm_predictions}

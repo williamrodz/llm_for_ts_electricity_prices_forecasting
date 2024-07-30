@@ -4,9 +4,14 @@ import matplotlib.pyplot as plt
 import pmdarima as pm
 import statsmodels.api as sm
 
-def arima_predict(df, column, training_start_index, training_end_index, prediction_length, plot=True):
-    # Assuming df is your DataFrame and it has been previously defined
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+import pmdarima as pm
 
+def arima_predict(df, column, training_start_index, training_end_index, prediction_length, plot=True):
+    # Extract training and forecast data
     training_df = df[training_start_index:training_end_index]
     forecast_index = df.index[training_end_index:training_end_index + prediction_length]
 
@@ -27,27 +32,32 @@ def arima_predict(df, column, training_start_index, training_end_index, predicti
     model = sm.tsa.ARIMA(training_df[column], order=(p, d, q))
     model_fit = model.fit()
 
-    # Forecast
-    comparison_values = df[forecast_index[0]:forecast_index[-1]][column]
-    arima_forecast = model_fit.forecast(steps=prediction_length)
+    # Forecast using the get_forecast method
+    forecast_result = model_fit.get_forecast(steps=prediction_length)
+    arima_forecast = forecast_result.predicted_mean
+    conf_int = forecast_result.conf_int(alpha=0.05)
+    
+    # Calculate standard errors
+    stderr = forecast_result.se_mean
 
     # Plot the original data and the forecast
     if plot:
-        # plot a window of actual data two prediction windows to each side
+        # Plot a window of actual data two prediction windows to each side
         n = len(df)
         left_most_index = max(0, training_start_index - 2 * prediction_length)
         right_most_index = min(n, training_end_index + 2 * prediction_length)
 
-        plt.figure(figsize=(8, 4))
-        plt.title("ARIMA Forecast")
-        plt.plot(df[column][left_most_index: training_start_index], color="royalblue", label="historical data")
-        plt.plot(df[column][training_start_index: training_end_index], color="green", label="context")
-        plt.plot(df[column][forecast_index[0]:right_most_index], color="royalblue", label="Post Context Historical data")
-        plt.plot(forecast_index, arima_forecast, color="tomato", label="median forecast")
+        plt.figure(figsize=(10, 5))
+        plt.title("ARIMA Forecast with Uncertainty")
+        plt.plot(df[column][left_most_index: training_start_index], color="royalblue", label="Historical Data")
+        plt.plot(df[column][training_start_index: training_end_index], color="green", label="Context")
+        plt.plot(df[column][forecast_index[0]:right_most_index], color="royalblue", label="Post Context Historical Data")
+        plt.plot(forecast_index, arima_forecast, color="tomato", label="Median Forecast")
+        plt.fill_between(forecast_index, conf_int.iloc[:, 0], conf_int.iloc[:, 1], color='tomato', alpha=0.2, label="95% Confidence Interval")
         plt.legend()
         plt.show()
 
-    return arima_forecast
+    return arima_forecast, stderr
 
 # Example usage:
 # Assuming you have a DataFrame `df` with a time series column `column`

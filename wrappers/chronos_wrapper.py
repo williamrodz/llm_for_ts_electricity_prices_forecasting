@@ -88,7 +88,11 @@ def chronos_predict(
     # Append predictions
     median_predictions = median
     low_predictions = low
-    high_predictions = high  
+    high_predictions = high
+
+    # Compute the standard deviation
+    # Calculate the standard deviation across the sample dimension
+    std_devs = np.std(forecast[0].numpy(), axis=0)      
 
     num_median_predictions = len(median_predictions)
 
@@ -108,4 +112,4 @@ def chronos_predict(
       plt.grid()
       plt.show()
 
-    return median_predictions
+    return median_predictions, std_devs
