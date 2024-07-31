@@ -233,7 +233,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
     
     elif "-" in algo:
       print("= = = = >")
-      print(f"Initializing CUSTOM Chronos {suffix} pipeline...\n")
+      print(f"Initializing CUSTOM Chronos {algo} pipeline...\n")
       pipeline = ChronosPipeline.from_pretrained(
       f"froyoresearcher/{algo}",
       device_map=DEVICE_MAP,  
