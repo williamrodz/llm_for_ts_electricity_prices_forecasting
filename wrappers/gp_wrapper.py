@@ -64,7 +64,7 @@ def gp_predict(df, column, training_start_index, training_end_index, prediction_
         right_most_index = min(n, training_end_index + 2 * prediction_length)
 
         plt.figure(figsize=(10, 5))
-        plt.title("GP Forecast with Uncertainty")
+        plt.title("Gaussian Process Forecast")
         plt.plot(df[column][left_most_index: training_start_index], color="royalblue", label="Historical Data")
         plt.plot(df[column][training_start_index: training_end_index], color="green", label="Context")
         plt.plot(df[column][forecast_index[0]: right_most_index], color="royalblue", label="Post Context Historical Data")
