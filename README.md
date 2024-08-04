@@ -50,6 +50,19 @@ Example:
  python tabulate_results.py --algorithm_names chronos_mini gp arima --data_segment delta
 ```
 
+### python graph_results.py
+Example:
+
+Graph basic three models 
+```
+python graph_results.py --algorithm_names chronos_mini arima gp --data_segments alpha --ledger_key ledger_nmse
+```
+
+Graph all FT models
+```
+python graph_results.py --algorithm_names chronos_mini arima gp chronos-tiny-336-48-8_000-alpha chronos-tiny-336-48-8_000-beta chronos-tiny-336-48-8_000-delta chronos-tiny-336-48-8_000-abd --ledger_key ledger_nmse --data_segments alpha 
+```
+
 ### Data/
 
    Folder that contains all time series data for predicting and comparing performance of forecasting methods

@@ -11,7 +11,7 @@ def investigate_results(algorithm_names, data_segments):
       "chronos-tiny-336-48-8_000-alpha": "Chronos Tiny (FT on Alpha)",
       "chronos-tiny-336-48-8_000-beta": "Chronos Tiny (FT on Beta)",
       "chronos-tiny-336-48-8_000-delta": "Chronos Tiny (FT on Delta)",
-      "chronos-tiny-336-48-8_000-abd": "Chronos Tiny (FT on A,B, and D mix)",
+      "chronos-tiny-336-48-8_000-abd": "Chronos Tiny (FT on ABD Mix)",
     }
     
     for data_segment in data_segments:
@@ -41,9 +41,9 @@ def investigate_results(algorithm_names, data_segments):
                 values = np.array(data[key], dtype=float)
                 return np.nanmean(values)
 
-            ledger_mse_mean = calculate_mean('ledger_mse')
-            ledger_nmse_mean = calculate_mean('ledger_nmse')
-            ledger_logl_mean = calculate_mean('ledger_logl')
+            ledger_mse_mean = round(calculate_mean('ledger_mse'), 2)
+            ledger_nmse_mean = round(calculate_mean('ledger_nmse'), 2)
+            ledger_logl_mean = round(calculate_mean('ledger_logl'), 2)
 
             alog_latex_label = alog_latex_label_map.get(algorithm_name, algorithm_name)
             
@@ -59,6 +59,7 @@ def investigate_results(algorithm_names, data_segments):
         
         # Print the LaTeX code for the table
         if results:
+            print("\n")
             print("\\begin{table}[h!]")
             print("\\centering")
             print("\\begin{tabular}{|l|c|c|c|}")
@@ -66,13 +67,14 @@ def investigate_results(algorithm_names, data_segments):
             print("  \\textbf{Method} & \\textbf{Mean MSE} & \\textbf{Mean NMSE} & \\textbf{Mean Log Likelihood} \\\\")
             print("  \\hline")
             for result in results:
-                print(f"  {result['algorithm']} & {result['mean_mse']:.4f} & {result['mean_nmse']:.4f} & {result['mean_logl']:.4f} \\\\")
+                print(f"  {result['algorithm']} & {result['mean_mse']:.2f} & {result['mean_nmse']:.2f} & {result['mean_logl']:.2f} \\\\")
                 print("  \\hline")
             print("\\end{tabular}")
             print("\\caption{Algorithm Performance Across" + f" {data_set_label} " + "Dataset}")
             # Add the label for the table, putting in the dataset name
             print("\\label{tab:methods_comparison_" + data_segment + "}")
             print("\\end{table}")
+            print("\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Investigate results in text files.')
