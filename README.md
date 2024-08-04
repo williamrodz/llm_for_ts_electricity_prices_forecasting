@@ -37,17 +37,17 @@ Compare performance of SARIMA, Chronos, LSTM, and Gaussian Processes forecasting
 ### half_hourly_prices_forecasting.ipynb
 Compare performance of forecasting algorithms on half hourly energy prices of electricity. Provided by Octopus
 
-### python parse_results.py 
+### python tabulate_results.py 
 Obtain tabulated results in latex code for performance measures across desired algorithms and data segment
 
 ```
- python parse_results.py --algorithm_names <desired algorithms> --data_segment <data segment of choice>
+ python tabulate_results.py --algorithm_names <desired algorithms> --data_segment <data segment of choice>
 ```
 
 
 Example:
 ```
- python parse_results.py --algorithm_names chronos_mini gp arima --data_segment delta
+ python tabulate_results.py --algorithm_names chronos_mini gp arima --data_segment delta
 ```
 
 ### Data/

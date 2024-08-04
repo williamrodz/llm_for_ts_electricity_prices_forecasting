@@ -8,6 +8,10 @@ def investigate_results(algorithm_names, data_segments):
       "chronos_mini": "Chronos Mini (20B params)",
       "arima": "ARIMA",
       "gp": "Gaussian Process",
+      "chronos-tiny-336-48-8_000-alpha": "Chronos Tiny (FT on Alpha)",
+      "chronos-tiny-336-48-8_000-beta": "Chronos Tiny (FT on Beta)",
+      "chronos-tiny-336-48-8_000-delta": "Chronos Tiny (FT on Delta)",
+      "chronos-tiny-336-48-8_000-abd": "Chronos Tiny (FT on A,B, and D mix)",
     }
     
     for data_segment in data_segments:
