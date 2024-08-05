@@ -101,6 +101,7 @@ def chronos_predict(
     right_most_index = min(n, context_end_index + 2 * prediction_length)
     
     if plot:
+      print(version)
       plt.figure(figsize=(8, 4))
       plt.title("Chronos Forecast")
       plt.plot(range(left_most_index,context_start_index), input_data[column][left_most_index:context_start_index], color="royalblue", label="Reference data")
