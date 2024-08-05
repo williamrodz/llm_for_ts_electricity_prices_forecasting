@@ -5,7 +5,11 @@ import argparse
 
 def investigate_results(algorithm_names, data_segments):
     alog_latex_label_map = {
-      "chronos_mini": "Chronos Mini (20B params)",
+      "chronos_tiny": "Chronos Tiny (8M params)",
+      "chronos_mini": "Chronos Mini (20M params)",
+      "chronos_small": "Chronos Small (46M params)",
+      "chronos_base": "Chronos Base (200M params)",
+      "chronos_large": "Chronos Large (710M params)",
       "arima": "ARIMA",
       "gp": "Gaussian Process",
       "chronos-tiny-336-48-8_000-alpha": "Chronos Tiny (FT on Alpha)",
@@ -39,11 +43,13 @@ def investigate_results(algorithm_names, data_segments):
             # Extract lists and calculate mean values, ignoring NaNs
             def calculate_mean(key):
                 values = np.array(data[key], dtype=float)
+                # print(values)
                 return np.nanmean(values)
 
             ledger_mse_mean = round(calculate_mean('ledger_mse'), 2)
             ledger_nmse_mean = round(calculate_mean('ledger_nmse'), 2)
             ledger_logl_mean = round(calculate_mean('ledger_logl'), 2)
+            # print("ledger_logl_mean", ledger_logl_mean)
 
             alog_latex_label = alog_latex_label_map.get(algorithm_name, algorithm_name)
             
@@ -60,7 +66,7 @@ def investigate_results(algorithm_names, data_segments):
         # Print the LaTeX code for the table
         if results:
             print("\n")
-            print("\\begin{table}[h!]")
+            print("\\begin{table}[h]")
             print("\\centering")
             print("\\begin{tabular}{|l|c|c|c|}")
             print("  \\hline")

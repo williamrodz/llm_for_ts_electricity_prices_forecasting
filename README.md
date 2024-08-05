@@ -28,6 +28,22 @@ This CSV file contains the generated Mackey-Glass chaotic time series data. It i
 ### kickoff_sliding_window.py
 Modify and run this file to get cumulative errors for an algorithm across a dataset
 
+Format
+```
+    python kickoff_sliding_window.py -a <algorithm> -d <data segment>
+```
+
+Example
+```
+    python kickoff_sliding_window.py -a chronos_tiny -d alpha
+```
+
+```
+    python kickoff_sliding_window.py -a chronos_large -d alpha && python kickoff_sliding_window.py -a chronos_large -d beta && python kickoff_sliding_window.py -a chronos_large -d delta
+
+
+```
+
 ### system_price_overview.ipynb
 See overview of system prices on different time horizons
 
@@ -45,9 +61,12 @@ Obtain tabulated results in latex code for performance measures across desired a
 ```
 
 
-Example:
+Examples:
 ```
  python tabulate_results.py --algorithm_names chronos_mini gp arima --data_segment delta
+
+python tabulate_results.py --algorithm_names chronos_tiny arima gp chronos-tiny-336-48-8_000-alpha chronos-tiny-336-48-8_000-beta chronos-tiny-336-48-8_000-delta chronos-tiny-336-48-8_000-abd  --data_segments alpha 
+
 ```
 
 ### python graph_results.py
@@ -55,7 +74,11 @@ Example:
 
 Graph basic three models 
 ```
-python graph_results.py --algorithm_names chronos_mini arima gp --data_segments alpha --ledger_key ledger_nmse
+python graph_results.py --algorithm_names chronos_tiny arima gp --data_segments alpha --ledger_key ledger_nmse
+```
+
+```
+python graph_results.py --algorithm_names  chronos_tiny chronos_mini chronos_small chronos_base chronos_large  --data_segments alpha
 ```
 
 Graph all FT models

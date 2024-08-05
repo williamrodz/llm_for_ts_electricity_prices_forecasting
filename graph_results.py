@@ -6,34 +6,46 @@ import matplotlib.pyplot as plt
 
 def investigate_results(algorithm_names, data_segment, ledger_key):
     alog_latex_label_map = {
-      "chronos_mini": "Chronos Mini (20B params)",
+      "chronos_tiny": "Chronos Tiny (8M params)",        
+      "chronos_mini": "Chronos Mini (20M params)",
+      "chronos_small": "Chronos Small (46M params)",
+      "chronos_base": "Chronos Base (200M params)",
+      "chronos_large": "Chronos Large (710M params)",
       "arima": "ARIMA",
       "gp": "Gaussian Process",
-      "chronos-tiny-336-48-8_000-alpha": "Chronos Alpha",
-      "chronos-tiny-336-48-8_000-beta": "Chronos Beta",
-      "chronos-tiny-336-48-8_000-delta": "Chronos Delta",
-      "chronos-tiny-336-48-8_000-abd": "Chronos ABD",
+      "chronos-tiny-336-48-8_000-alpha": "Chronos Tiny Fined Tuned on Alpha ",
+      "chronos-tiny-336-48-8_000-beta": "Chronos Tiny Fine Tuned on Beta",
+      "chronos-tiny-336-48-8_000-delta": "Chronos Tiny Fine Tuned on Delta",
+      "chronos-tiny-336-48-8_000-abd": "Chronos Tiny Fine Tuned on ABD",
       # Add more algorithm mappings as needed
     }
 
     algorithm_color_map = {
+        "chronos_tiny": "red",        
         "chronos_mini": "red",
+        "chronos_small": "pink",
+        "chronos_base": "pink",
+        "chronos_large": "purple",
         "arima": "orange",
         "gp": "green",
         "chronos-tiny-336-48-8_000-alpha": "#2381c1",
         "chronos-tiny-336-48-8_000-beta": "#1c6eb4",
-        "chronos-tiny-336-48-8_000-delta": "#0052a5",
+        "chronos-tiny-336-48-8_000-delta": "magenta",
         "chronos-tiny-336-48-8_000-abd": "black",
         # Add more algorithms and colors as needed
       }
 
     algorithm_linestyle_map = {
-      "chronos_mini": '-',       # Solid line
+        "chronos_tiny": "-",        
+        "chronos_mini": "--",
+        "chronos_small": "-.",
+        "chronos_base": "-",
+        "chronos_large": "-",        
       "arima": '-',             # Dashed line
       "gp": '-',                # Dash-dot line
-      "chronos-tiny-336-48-8_000-alpha": '--',      # Dotted line
+      "chronos-tiny-336-48-8_000-alpha": '-',      # Dotted line
       "chronos-tiny-336-48-8_000-beta": '-.',  # Dash-dot-dash pattern
-      "chronos-tiny-336-48-8_000-delta": '--',       # Long dashes
+      "chronos-tiny-336-48-8_000-delta": '-',       # Long dashes
       "chronos-tiny-336-48-8_000-abd": '-',   # Dash-dot-dash with longer gaps
       # Add more algorithms and linestyles as needed
     }
@@ -49,6 +61,10 @@ def investigate_results(algorithm_names, data_segment, ledger_key):
     plt.title(f'Comparison of {ledger_key_map[ledger_key]} Values for Different Algorithms on {data_segment.capitalize()} Segment')
     plt.xlabel('Sliding Window Iteration Number')
     plt.ylabel(ledger_key_map[ledger_key])
+
+    if ledger_key == "ledger_nmse":
+        plt.axhline(y=1, color='grey', linestyle='--', linewidth=1, label='Baseline (NMSE=1)')
+    
     
     for algorithm_name in algorithm_names:
         # Define the directory and filename pattern
