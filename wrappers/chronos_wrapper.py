@@ -1,43 +1,10 @@
-import pandas as pd
 import torch
 import numpy as np
 from chronos import ChronosPipeline
 import matplotlib.pyplot as plt
-import os
-import statsmodels.api as sm
-import pmdarima as pm
-import utils
 from constants import *
 
-"""
-input: 
-    model:
-      Identifies the model for time series prediction 
-      e.g. Chronos, S-ARIMA, etc
-    data: [float]
-      Represents the time series data
-    context_range: [int]
-      Range of data points to use for prediction
-    prediction_length: int
-      Number of data points to predict
-    autoregressions: int
-      Number of autoregressions to create after the initial prediction window
-
-output:
-    [float]
-      Returns the predicted values
-    
-    Not returned, but printed:
-      graph of the predicted values against 80% prediction interval
-"""
-import numpy as np
-import torch
-import matplotlib.pyplot as plt
-from constants import *
-
-def chronos_predict(
-  input_data: [float],
-  column: str,
+def chronos_predict(input_data: [float], column: str,
   context_start_index: int,
   context_end_index: int,
   prediction_length: int,
@@ -45,6 +12,32 @@ def chronos_predict(
   plot=True,
   version="small"
   ):
+    """
+    input:
+        input_data: [float]
+            Represents the time series data
+        column: str
+            Represents the column in the DataFrame to predict
+        context_start_index: int
+            Represents the start index of the context data
+        context_end_index: int
+            Represents the end index of the context data
+        prediction_length: int
+            Number of data points to predict
+        pipeline: ChronosPipeline
+            Represents the Chronos pipeline to use
+        plot: bool
+            Determines whether to plot the forecast
+        version: str
+            Represents the version of the Chronos model to use
+    output:
+        median_predictions: [float]
+            Returns the predicted median values
+        std_devs: [float]
+            Returns the standard deviations of the forecast
+
+    """
+    
     # Initialize pipeline if not provided
     if pipeline is None:
       print(f"= = = > Chronos pipeline not initialized. Firing up {version} pipeline. May take time..")

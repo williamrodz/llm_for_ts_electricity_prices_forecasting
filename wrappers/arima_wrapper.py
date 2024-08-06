@@ -1,16 +1,28 @@
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import pmdarima as pm
 import statsmodels.api as sm
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import statsmodels.api as sm
-import pmdarima as pm
 
 def arima_predict(df, column, training_start_index, training_end_index, prediction_length, plot=True):
+    """
+    input: 
+        df: DataFrame
+            Represents the time series data
+        column: str
+            Represents the column in the DataFrame to predict
+        training_start_index: int
+            Represents the start index of the training data
+        training_end_index: int
+            Represents the end index of the training data
+        prediction_length: int
+            Number of data points to predict
+        plot: bool
+            Determines whether to plot the forecast
+    output:
+        arima_forecast: [float]
+            Returns the predicted values
+        stderr: [float]
+            Returns the standard errors of the forecast
+    """
     # Extract training and forecast data
     training_df = df[training_start_index:training_end_index]
     forecast_index = df.index[training_end_index:training_end_index + prediction_length]

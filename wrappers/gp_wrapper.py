@@ -1,12 +1,30 @@
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic, ExpSineSquared, ConstantKernel as C, WhiteKernel
-import utils 
+from sklearn.gaussian_process.kernels import RBF, ExpSineSquared, ConstantKernel as C, WhiteKernel
 import numpy as np
 import matplotlib.pyplot as plt
 from constants import *
 
-
 def gp_predict(df, column, training_start_index, training_end_index, prediction_length, plot=True):
+    """
+    input:
+        df: DataFrame
+            Represents the time series data
+        column: str
+            Represents the column in the DataFrame to predict
+        training_start_index: int
+            Represents the start index of the training data
+        training_end_index: int
+            Represents the end index of the training data
+        prediction_length: int
+            Number of data points to predict
+        plot: bool
+            Determines whether to plot the forecast
+    output:
+        y_pred_rescaled: [float]
+            Returns the predicted values
+        sigma_rescaled: [float]
+            Returns the standard deviations of the forecast
+    """
     # Check for string date
     if isinstance(training_start_index, str) or isinstance(training_end_index, str):
         raise ValueError("Both training_start_index and training_end_index must be integers")
@@ -54,8 +72,6 @@ def gp_predict(df, column, training_start_index, training_end_index, prediction_
 
     y_pred_rescaled = y_pred * std + mean
     sigma_rescaled = sigma * std  # Rescale the uncertainty
-
-    actual_values = df[forecast_index[0]:forecast_index[-1]][column]
 
     # Plot the original data and the forecast
     if plot:
