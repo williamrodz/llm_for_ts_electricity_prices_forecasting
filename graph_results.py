@@ -4,7 +4,7 @@ import numpy as np
 import argparse
 import matplotlib.pyplot as plt
 
-def investigate_results(algorithm_names, data_segment, ledger_key):
+def investigate_results(algorithm_names, data_segment, ledger_key, run_name):
     alog_latex_label_map = {
       "chronos_tiny": "Chronos Tiny (8M params)",        
       "chronos_mini": "Chronos Mini (20M params)",
@@ -12,7 +12,7 @@ def investigate_results(algorithm_names, data_segment, ledger_key):
       "chronos_base": "Chronos Base (200M params)",
       "chronos_large": "Chronos Large (710M params)",
       "arima": "ARIMA",
-      "gp": "Gaussian Process",
+      "gp": "Gaussian Process (Composite Kernel)",
       "chronos-tiny-336-48-8_000-alpha": "Chronos Tiny Fined Tuned on Alpha ",
       "chronos-tiny-336-48-8_000-beta": "Chronos Tiny Fine Tuned on Beta",
       "chronos-tiny-336-48-8_000-delta": "Chronos Tiny Fine Tuned on Delta",
@@ -100,15 +100,16 @@ def investigate_results(algorithm_names, data_segment, ledger_key):
     
     plt.legend()
     plt.grid(True)
-    plt.show()
+    plt.savefig(f"results/plots/{run_name}.png", dpi=300)
+    # plt.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Investigate results in text files.')
     parser.add_argument('--algorithm_names', nargs='+', type=str, required=True, help='The names of the algorithms (space-separated list)')
     parser.add_argument('--data_segments', nargs='+', type=str, required=True, help='The data segments to look for (space-separated list)')
     parser.add_argument('--ledger_key', type=str, required=True, help='The ledger key to plot (e.g., ledger_mse, ledger_nmse, ledger_logl)')
-
+    parser.add_argument('--run_name', type=str, required=True, help='The name of the run to save the plot')
     args = parser.parse_args()
     
     for data_segment in args.data_segments:
-        investigate_results(args.algorithm_names, data_segment, args.ledger_key)
+        investigate_results(args.algorithm_names, data_segment, args.ledger_key, args.run_name)

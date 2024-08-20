@@ -13,6 +13,9 @@ import json
 import time
 import os
 
+def get_data_stats(data):
+    return data.describe()
+
 # Custom JSON Encoder
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -364,7 +367,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
 
   return algo_results
 
-def compare_prediction_methods(df, data_column, date_column, context_start, context_finish, prediction_length, plot=True,methods=["chronos_mini","arima","sarima","gp","lstm"]):
+def compare_prediction_methods(df, data_column, date_column, context_start, context_finish, prediction_length, plot=True,methods=["chronos_mini","arima","sarima","gp","lstm"], run_name=None):
   # convert dates to an integer index
   if type(context_start) == str:
     context_start = find_first_occurrence_index(df, context_start, date_column)
@@ -377,7 +380,7 @@ def compare_prediction_methods(df, data_column, date_column, context_start, cont
   joint_results = {}
   for method in methods:
     if method.startswith("chronos"):
-      chronos_predictions, chronos_sigma = chronos_predict(df, data_column, context_start,context_finish, prediction_length, plot=plot, version=method)
+      chronos_predictions, chronos_sigma = chronos_predict(df, data_column, context_start,context_finish, prediction_length, plot=plot, version=method, run_name=run_name)
       joint_results[method] = {"predictions":chronos_predictions, "sigma":chronos_sigma}
     elif method == "sarima":
       sarima_predictions = sarima_predict(
@@ -390,10 +393,10 @@ def compare_prediction_methods(df, data_column, date_column, context_start, cont
         )
       joint_results[method] = {"predictions":sarima_predictions}
     elif method == "arima":
-      arima_predictions, arima_sigma = arima_predict(df, data_column, context_start, context_finish, prediction_length, plot=plot)
+      arima_predictions, arima_sigma = arima_predict(df, data_column, context_start, context_finish, prediction_length, plot=plot, run_name=run_name)
       joint_results[method] = {"predictions":arima_predictions, "sigma":arima_sigma}
     elif method == "gp":
-      gp_predictions, gp_sigma = gp_predict(df, data_column, context_start, context_finish, prediction_length, plot=plot)
+      gp_predictions, gp_sigma = gp_predict(df, data_column, context_start, context_finish, prediction_length, plot=plot, run_name=run_name)
       joint_results[method] = {"predictions":gp_predictions, "sigma":gp_sigma}
     elif method == "lstm":
       lstm_predictions = lstm_predict(df, data_column, context_start, context_finish, prediction_length, plot=plot)

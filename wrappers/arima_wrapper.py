@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pmdarima as pm
 import statsmodels.api as sm
 
-def arima_predict(df, column, training_start_index, training_end_index, prediction_length, plot=True):
+def arima_predict(df, column, training_start_index, training_end_index, prediction_length, plot=True, run_name=None):
     """
     input: 
         df: DataFrame
@@ -60,14 +60,16 @@ def arima_predict(df, column, training_start_index, training_end_index, predicti
         right_most_index = min(n, training_end_index + 2 * prediction_length)
 
         plt.figure(figsize=(10, 5))
-        plt.title("ARIMA Forecast")
+        # plt.title("ARIMA Forecast")
         plt.plot(df[column][left_most_index: training_start_index], color="royalblue", label="Historical Data")
-        plt.plot(df[column][training_start_index: training_end_index], color="green", label="Context")
-        plt.plot(df[column][forecast_index[0]:right_most_index], color="royalblue", label="Post Context Historical Data")
-        plt.plot(forecast_index, arima_forecast, color="tomato", label="Median Forecast")
+        plt.plot(df[column][training_start_index: training_end_index], color="green", label="Context Data")
+        plt.plot(df[column][forecast_index[0]:right_most_index], color="royalblue",)
+        plt.plot(forecast_index, arima_forecast, color="tomato", label="ARIMA Median Forecast")
         plt.fill_between(forecast_index, conf_int.iloc[:, 0], conf_int.iloc[:, 1], color='tomato', alpha=0.2, label="95% Confidence Interval")
         plt.legend()
-        plt.show()
+        if run_name and type(run_name) == str and run_name != "":
+            plt.savefig(f"results/plots/arima_{run_name}.png", dpi=300)               
+        # plt.show() 
 
     return arima_forecast, stderr
 

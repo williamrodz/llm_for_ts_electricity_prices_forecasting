@@ -11,7 +11,7 @@ def investigate_results(algorithm_names, data_segments):
       "chronos_base": "Chronos Base (200M params)",
       "chronos_large": "Chronos Large (710M params)",
       "arima": "ARIMA",
-      "gp": "Gaussian Process",
+      "gp": "Gaussian Process (Composite Kernel)",
       "chronos-tiny-336-48-8_000-alpha": "Chronos Tiny (FT on Alpha)",
       "chronos-tiny-336-48-8_000-beta": "Chronos Tiny (FT on Beta)",
       "chronos-tiny-336-48-8_000-delta": "Chronos Tiny (FT on Delta)",
@@ -45,10 +45,14 @@ def investigate_results(algorithm_names, data_segments):
                 values = np.array(data[key], dtype=float)
                 # print(values)
                 return np.nanmean(values)
+            
+            def calculate_median(key):
+                values = np.array(data[key], dtype=float)
+                return np.nanmedian(values)
 
             ledger_mse_mean = round(calculate_mean('ledger_mse'), 2)
             ledger_nmse_mean = round(calculate_mean('ledger_nmse'), 2)
-            ledger_logl_mean = round(calculate_mean('ledger_logl'), 2)
+            ledger_logl_mean = round(calculate_median('ledger_logl'), 2)
             # print("ledger_logl_mean", ledger_logl_mean)
 
             alog_latex_label = alog_latex_label_map.get(algorithm_name, algorithm_name)
@@ -70,7 +74,7 @@ def investigate_results(algorithm_names, data_segments):
             print("\\centering")
             print("\\begin{tabular}{|l|c|c|c|}")
             print("  \\hline")
-            print("  \\textbf{Method} & \\textbf{Mean MSE} & \\textbf{Mean NMSE} & \\textbf{Mean Log Likelihood} \\\\")
+            print("  \\textbf{Method} & \\textbf{Mean MSE} & \\textbf{Mean NMSE} & \\textbf{Median Log Likelihood} \\\\")
             print("  \\hline")
             for result in results:
                 print(f"  {result['algorithm']} & {result['mean_mse']:.2f} & {result['mean_nmse']:.2f} & {result['mean_logl']:.2f} \\\\")

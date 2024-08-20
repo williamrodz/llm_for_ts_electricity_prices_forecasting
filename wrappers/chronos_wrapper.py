@@ -10,7 +10,8 @@ def chronos_predict(input_data: [float], column: str,
   prediction_length: int,
   pipeline=None,
   plot=True,
-  version="small"
+  version="small",
+  run_name=None
   ):
     """
     input:
@@ -75,8 +76,11 @@ def chronos_predict(input_data: [float], column: str,
         limit_prediction_length=False
     )
 
-    # Get the quantiles for the prediction interval
-    low, median, high = np.quantile(forecast[0].numpy(), [0.1, 0.5, 0.9], axis=0)
+    # Get the quantiles for the 80% prediction interval
+    #low, median, high = np.quantile(forecast[0].numpy(), [0.1, 0.5, 0.9], axis=0)
+
+    # Get the quantiles for the 95% prediction interval
+    low, median, high = np.quantile(forecast[0].numpy(), [0.025, 0.5, 0.975], axis=0)    
 
     # Append predictions
     median_predictions = median
@@ -96,14 +100,16 @@ def chronos_predict(input_data: [float], column: str,
     if plot:
       print(version)
       plt.figure(figsize=(8, 4))
-      plt.title("Chronos Forecast")
-      plt.plot(range(left_most_index,context_start_index), input_data[column][left_most_index:context_start_index], color="royalblue", label="Reference data")
-      plt.plot(range(context_start_index, context_end_index,), input_data[column][context_start_index:context_end_index], color="green", label="Context data")
-      plt.plot(range(context_end_index,right_most_index), input_data[column][context_end_index:right_most_index], color="royalblue", label="Post-Context Reference data")
-      plt.plot(range(context_end_index, context_end_index + num_median_predictions), median_predictions, color="tomato", label="Chronos Median forecast")
-      plt.fill_between(range(context_end_index, context_end_index + num_median_predictions), low_predictions, high_predictions, color="tomato", alpha=0.3, label="80% Prediction Interval")
+    #   plt.title("Chronos Forecast")
+      plt.plot(range(left_most_index,context_start_index), input_data[column][left_most_index:context_start_index], color="royalblue", label="Reference Data")
+      plt.plot(range(context_start_index, context_end_index,), input_data[column][context_start_index:context_end_index], color="green", label="Context Data")
+      plt.plot(range(context_end_index,right_most_index), input_data[column][context_end_index:right_most_index], color="royalblue",)
+      plt.plot(range(context_end_index, context_end_index + num_median_predictions), median_predictions, color="tomato", label="Chronos Median Forecast")
+      plt.fill_between(range(context_end_index, context_end_index + num_median_predictions), low_predictions, high_predictions, color="tomato", alpha=0.3, label="95% Prediction Interval")
       plt.legend()
       plt.grid()
-      plt.show()
+      if run_name and type(run_name) == str and run_name != "":
+        plt.savefig(f"results/plots/{version}_{run_name}.png", dpi=300)      
+     # plt.show()
 
     return median_predictions, std_devs

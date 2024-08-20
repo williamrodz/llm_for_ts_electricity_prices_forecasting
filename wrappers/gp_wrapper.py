@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from constants import *
 
-def gp_predict(df, column, training_start_index, training_end_index, prediction_length, plot=True):
+def gp_predict(df, column, training_start_index, training_end_index, prediction_length, plot=True, run_name=None):
     """
     input:
         df: DataFrame
@@ -80,13 +80,15 @@ def gp_predict(df, column, training_start_index, training_end_index, prediction_
         right_most_index = min(n, training_end_index + 2 * prediction_length)
 
         plt.figure(figsize=(10, 5))
-        plt.title("Gaussian Process Forecast")
+        # plt.title("Gaussian Process Forecast")
         plt.plot(df[column][left_most_index: training_start_index], color="royalblue", label="Historical Data")
-        plt.plot(df[column][training_start_index: training_end_index], color="green", label="Context")
-        plt.plot(df[column][forecast_index[0]: right_most_index], color="royalblue", label="Post Context Historical Data")
-        plt.plot(forecast_index, y_pred_rescaled, color="tomato", label="GP Forecast")
+        plt.plot(df[column][training_start_index: training_end_index], color="green", label="Context Data")
+        plt.plot(df[column][forecast_index[0]: right_most_index], color="royalblue",)
+        plt.plot(forecast_index, y_pred_rescaled, color="tomato", label="GP (Composite Kernel) Forecast")
         plt.fill_between(forecast_index, y_pred_rescaled - 1.96 * sigma_rescaled, y_pred_rescaled + 1.96 * sigma_rescaled, color='tomato', alpha=0.2, label="95% Confidence Interval")
         plt.legend()
-        plt.show()
+        if run_name and type(run_name) == str and run_name != "":
+            plt.savefig(f"results/plots/gp_{run_name}.png", dpi=300)         
+        # plt.show()       
 
     return y_pred_rescaled, sigma_rescaled
