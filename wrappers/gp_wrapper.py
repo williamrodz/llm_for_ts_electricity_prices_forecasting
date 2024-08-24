@@ -3,6 +3,8 @@ from sklearn.gaussian_process.kernels import RBF, ExpSineSquared, ConstantKernel
 import numpy as np
 import matplotlib.pyplot as plt
 from constants import *
+import utils
+import matplotlib.dates as mdates
 
 def gp_predict(df, column, training_start_index, training_end_index, prediction_length, plot=True, run_name=None):
     """
@@ -79,18 +81,43 @@ def gp_predict(df, column, training_start_index, training_end_index, prediction_
         left_most_index = max(0, training_start_index - 2 * prediction_length)
         right_most_index = min(n, training_end_index + 2 * prediction_length)
 
+        # Map time steps to dates
+        historical_dates = [utils.map_timestep_to_date(idx) for idx in range(left_most_index, training_start_index)]
+        context_dates = [utils.map_timestep_to_date(idx) for idx in range(training_start_index, training_end_index)]
+        forecast_dates = [utils.map_timestep_to_date(idx) for idx in range(forecast_index[0], right_most_index)]
+        prediction_dates = [utils.map_timestep_to_date(idx) for idx in forecast_index]
+
         plt.figure(figsize=(10, 5))
-        # plt.title("Gaussian Process Forecast")
-        plt.plot(df[column][left_most_index: training_start_index], color="royalblue", label="Historical Data")
-        plt.plot(df[column][training_start_index: training_end_index], color="green", label="Context Data")
-        plt.plot(df[column][forecast_index[0]: right_most_index], color="royalblue",)
-        plt.plot(forecast_index, y_pred_rescaled, color="tomato", label="GP (Composite Kernel) Forecast")
-        plt.fill_between(forecast_index, y_pred_rescaled - 1.96 * sigma_rescaled, y_pred_rescaled + 1.96 * sigma_rescaled, color='tomato', alpha=0.2, label="95% Confidence Interval")
+        plt.plot(historical_dates, df[column][left_most_index: training_start_index], color="royalblue", label="Historical Data")
+        plt.plot(context_dates, df[column][training_start_index: training_end_index], color="green", label="Context Data")
+        plt.plot(forecast_dates, df[column][forecast_index[0]: right_most_index], color="royalblue")
+        plt.plot(prediction_dates, y_pred_rescaled, color="tomato", label="GP (Composite Kernel) Forecast")
+        plt.fill_between(prediction_dates, y_pred_rescaled - 1.96 * sigma_rescaled, y_pred_rescaled + 1.96 * sigma_rescaled, color='tomato', alpha=0.2, label="95% Confidence Interval")
+
         plt.legend()
-        plt.xlabel("Time Step")
-        plt.ylabel("Price per kWh (pence)")        
+        plt.xlabel("Date")
+        plt.ylabel("Price per kWh (pence)")
+
+        # Combine all dates together to calculate tick positions
+        all_dates = historical_dates + context_dates + forecast_dates + prediction_dates
+
+        # Calculate positions for 0%, 25%, 50%, 75%, and 100% of the date range
+        num_dates = len(all_dates)
+        ticks_positions = [
+            all_dates[0],                           # 0%
+            all_dates[num_dates // 4],              # 25%
+            all_dates[num_dates // 2],              # 50%
+            all_dates[3 * num_dates // 4],          # 75%
+            all_dates[-1]                           # 100%
+        ]
+        # Set custom x-ticks at the calculated positions (5 ticks)
+        plt.gca().set_xticks(ticks_positions)                
+
+        # Format the x-axis with date labels
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+
         if run_name and type(run_name) == str and run_name != "":
-            plt.savefig(f"results/plots/gp_{run_name}.png", dpi=300)         
-        # plt.show()       
+            plt.savefig(f"results/plots/gp_{run_name}.png", dpi=300)
+        # plt.show()   
 
     return y_pred_rescaled, sigma_rescaled

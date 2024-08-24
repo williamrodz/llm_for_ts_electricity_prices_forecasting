@@ -105,10 +105,10 @@ def chronos_predict(input_data: [float], column: str,
       plt.figure(figsize=(8, 4))
     
       # Map time steps to corresponding dates
-      reference_dates = [utils.map_timestamp_to_date(idx) for idx in range(left_most_index, context_start_index)]
-      context_dates = [utils.map_timestamp_to_date(idx) for idx in range(context_start_index, context_end_index)]
-      future_dates = [utils.map_timestamp_to_date(idx) for idx in range(context_end_index, right_most_index)]
-      prediction_dates = [utils.map_timestamp_to_date(idx) for idx in range(context_end_index, context_end_index + num_median_predictions)]
+      reference_dates = [utils.map_timestep_to_date(idx) for idx in range(left_most_index, context_start_index)]
+      context_dates = [utils.map_timestep_to_date(idx) for idx in range(context_start_index, context_end_index)]
+      future_dates = [utils.map_timestep_to_date(idx) for idx in range(context_end_index, right_most_index)]
+      prediction_dates = [utils.map_timestep_to_date(idx) for idx in range(context_end_index, context_end_index + num_median_predictions)]
       
       # Combine all dates together to calculate tick positions
       all_dates = reference_dates + context_dates + future_dates

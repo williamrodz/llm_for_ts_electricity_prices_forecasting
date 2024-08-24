@@ -13,7 +13,7 @@ import json
 import time
 import os
 
-def map_timestamp_to_date(row_index):
+def map_timestep_to_date(row_index):
     """
     Maps an integer row index to the corresponding date in the 'Valid_From_UTC' column.
     
