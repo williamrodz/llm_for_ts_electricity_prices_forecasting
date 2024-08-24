@@ -67,6 +67,8 @@ def arima_predict(df, column, training_start_index, training_end_index, predicti
         plt.plot(forecast_index, arima_forecast, color="tomato", label="ARIMA Median Forecast")
         plt.fill_between(forecast_index, conf_int.iloc[:, 0], conf_int.iloc[:, 1], color='tomato', alpha=0.2, label="95% Confidence Interval")
         plt.legend()
+        plt.xlabel("Time Step")
+        plt.ylabel("Price per kWh (pence)")        
         if run_name and type(run_name) == str and run_name != "":
             plt.savefig(f"results/plots/arima_{run_name}.png", dpi=300)               
         # plt.show() 

@@ -2,7 +2,10 @@ import torch
 import numpy as np
 from chronos import ChronosPipeline
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
 from constants import *
+import utils
 
 def chronos_predict(input_data: [float], column: str,
   context_start_index: int,
@@ -100,14 +103,48 @@ def chronos_predict(input_data: [float], column: str,
     if plot:
       print(version)
       plt.figure(figsize=(8, 4))
-    #   plt.title("Chronos Forecast")
-      plt.plot(range(left_most_index,context_start_index), input_data[column][left_most_index:context_start_index], color="royalblue", label="Reference Data")
-      plt.plot(range(context_start_index, context_end_index,), input_data[column][context_start_index:context_end_index], color="green", label="Context Data")
-      plt.plot(range(context_end_index,right_most_index), input_data[column][context_end_index:right_most_index], color="royalblue",)
-      plt.plot(range(context_end_index, context_end_index + num_median_predictions), median_predictions, color="tomato", label="Chronos Median Forecast")
-      plt.fill_between(range(context_end_index, context_end_index + num_median_predictions), low_predictions, high_predictions, color="tomato", alpha=0.3, label="95% Prediction Interval")
+    
+      # Map time steps to corresponding dates
+      reference_dates = [utils.map_timestamp_to_date(idx) for idx in range(left_most_index, context_start_index)]
+      context_dates = [utils.map_timestamp_to_date(idx) for idx in range(context_start_index, context_end_index)]
+      future_dates = [utils.map_timestamp_to_date(idx) for idx in range(context_end_index, right_most_index)]
+      prediction_dates = [utils.map_timestamp_to_date(idx) for idx in range(context_end_index, context_end_index + num_median_predictions)]
+      
+      # Combine all dates together to calculate tick positions
+      all_dates = reference_dates + context_dates + future_dates
+      
+      # Calculate positions for 0%, 25%, 50%, 75%, and 100% of the date range
+      num_dates = len(all_dates)
+      ticks_positions = [
+          all_dates[0],                           # 0%
+          all_dates[num_dates // 4],              # 25%
+          all_dates[num_dates // 2],              # 50%
+          all_dates[3 * num_dates // 4],          # 75%
+          all_dates[-1]                           # 100%
+      ]
+    
+      # Plotting with dates on the x-axis
+      plt.plot(reference_dates, input_data[column][left_most_index:context_start_index], color="royalblue", label="Reference Data")
+      plt.plot(context_dates, input_data[column][context_start_index:context_end_index], color="green", label="Context Data")
+      plt.plot(future_dates, input_data[column][context_end_index:right_most_index], color="royalblue")
+      plt.plot(prediction_dates, median_predictions, color="tomato", label="Chronos Median Forecast")
+      plt.fill_between(prediction_dates, low_predictions, high_predictions, color="tomato", alpha=0.3, label="95% Prediction Interval")
+      
+      # Add legend, labels, and grid
       plt.legend()
+      plt.xlabel("Date")
+      plt.ylabel("Price per kWh (pence)")
       plt.grid()
+
+      # Set custom x-ticks at the calculated positions (5 ticks)
+      plt.gca().set_xticks(ticks_positions)
+
+      # Format the x-axis with date labels
+      plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+
+
+      # Rotate date labels for better readability
+      plt.xticks(rotation=0)
       if run_name and type(run_name) == str and run_name != "":
         plt.savefig(f"results/plots/{version}_{run_name}.png", dpi=300)      
      # plt.show()

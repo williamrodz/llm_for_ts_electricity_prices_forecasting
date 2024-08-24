@@ -13,6 +13,41 @@ import json
 import time
 import os
 
+def map_timestamp_to_date(row_index):
+    """
+    Maps an integer row index to the corresponding date in the 'Valid_From_UTC' column.
+    
+    Args:
+        row_index (int): The integer representing the row index.
+        file_path (str): Path to the CSV file containing the date column.
+    
+    Returns:
+        pd.Timestamp or None: The corresponding date in the 'Valid_From_UTC' column, or None if the index is out of bounds or if an error occurs.
+    """
+    half_hourly_prices = pd.read_csv(f"{DATA_FOLDER}/agile_octopus_london.csv")
+
+    try:
+
+        # Ensure 'Valid_From_UTC' is in datetime format
+        if 'Valid_From_UTC' in half_hourly_prices.columns:
+            if not pd.api.types.is_datetime64_any_dtype(half_hourly_prices['Valid_From_UTC']):
+                # Attempt to infer the date format; if known, specify it explicitly, e.g., format='%Y-%m-%d %H:%M:%S'
+                half_hourly_prices['Valid_From_UTC'] = pd.to_datetime(half_hourly_prices['Valid_From_UTC'], format="%m/%d/%y %H:%M")
+
+            # Check if the row_index is within bounds
+            if row_index >= 0 and row_index < len(half_hourly_prices):
+                date_value = half_hourly_prices.loc[row_index, 'Valid_From_UTC']
+                return date_value
+            else:
+                print(f"Row index {row_index} is out of bounds.")
+                return None
+        else:
+            print("Column 'Valid_From_UTC' not found in the DataFrame.")
+            return None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
 def get_data_stats(data):
     return data.describe()
 

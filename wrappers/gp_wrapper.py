@@ -87,6 +87,8 @@ def gp_predict(df, column, training_start_index, training_end_index, prediction_
         plt.plot(forecast_index, y_pred_rescaled, color="tomato", label="GP (Composite Kernel) Forecast")
         plt.fill_between(forecast_index, y_pred_rescaled - 1.96 * sigma_rescaled, y_pred_rescaled + 1.96 * sigma_rescaled, color='tomato', alpha=0.2, label="95% Confidence Interval")
         plt.legend()
+        plt.xlabel("Time Step")
+        plt.ylabel("Price per kWh (pence)")        
         if run_name and type(run_name) == str and run_name != "":
             plt.savefig(f"results/plots/gp_{run_name}.png", dpi=300)         
         # plt.show()       
