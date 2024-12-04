@@ -3,6 +3,8 @@ import json
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
+from scipy.stats import f_oneway, kruskal, ttest_rel, shapiro, wilcoxon
+
 
 def investigate_results(algorithm_names, data_segment, ledger_key, run_name):
     alog_latex_label_map = {
@@ -65,7 +67,8 @@ def investigate_results(algorithm_names, data_segment, ledger_key, run_name):
     if ledger_key == "ledger_nmse":
         plt.axhline(y=1, color='grey', linestyle='--', linewidth=1, label='Baseline (NMSE=1)')
     
-    
+    method_ledgers = []
+
     for algorithm_name in algorithm_names:
         # Define the directory and filename pattern
         base_dir = "results"
@@ -91,7 +94,8 @@ def investigate_results(algorithm_names, data_segment, ledger_key, run_name):
             continue
         
         ledger_values = np.array(data[ledger_key], dtype=float)
-        
+        # method_ledgers.append(ledger_values)
+                     
         # Plot the values
         alog_latex_label = alog_latex_label_map.get(algorithm_name, algorithm_name)
         color = algorithm_color_map.get(algorithm_name, "black")  # Default to black if not specified
@@ -101,7 +105,51 @@ def investigate_results(algorithm_names, data_segment, ledger_key, run_name):
     plt.legend()
     plt.grid(True)
     plt.savefig(f"results/plots/{run_name}.png", dpi=300)
+    plt.show()
+
+    # # MSE arrays for each method (replace with your data)
+    # print(np.shape(method_ledgers))
+    # mse_method1 = np.array(method_ledgers[0])
+    # mse_method2 = np.array(method_ledgers[1])
+    # mse_method3 = np.array(method_ledgers[2])
+
+    # plt.hist(mse_method1, bins=20, alpha=0.7, color='blue')
+    # plt.title('Histogram of MSE Values (Method 1)')
     # plt.show()
+
+    # plt.hist(mse_method2, bins=20, alpha=0.7, color='blue')
+    # plt.title('Histogram of MSE Values (Method 1)')
+    # plt.show()
+
+    # plt.hist(mse_method3, bins=20, alpha=0.7, color='blue')
+    # plt.title('Histogram of MSE Values (Method 1)')
+    # plt.show()
+
+    # # Check normality (Shapiro-Wilk Test)
+    # print(shapiro(mse_method1))
+    # print(shapiro(mse_method2))
+    # print(shapiro(mse_method3))
+
+    # # ANOVA Test (for normal distributions)
+    # anova_result = f_oneway(mse_method1, mse_method2, mse_method3)
+    # print("ANOVA Result:", anova_result)
+
+    # # Kruskal-Wallis Test (non-parametric)
+    # kruskal_result = kruskal(mse_method1, mse_method2, mse_method3)
+    # print("Kruskal-Wallis Result:", kruskal_result)
+
+    # # Pairwise t-tests (if normality holds)
+    # ttest_12 = ttest_rel(mse_method1, mse_method2)
+    # ttest_13 = ttest_rel(mse_method1, mse_method3)
+    # ttest_23 = ttest_rel(mse_method2, mse_method3)
+    # print("Paired t-tests:", ttest_12, ttest_13, ttest_23)
+
+    # # Wilcoxon Test (if non-parametric)
+    # wilcoxon_12 = wilcoxon(mse_method1, mse_method2)
+    # wilcoxon_13 = wilcoxon(mse_method1, mse_method3)
+    # wilcoxon_23 = wilcoxon(mse_method2, mse_method3)
+    # print("Wilcoxon Tests:", wilcoxon_12, wilcoxon_13, wilcoxon_23)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Investigate results in text files.')
