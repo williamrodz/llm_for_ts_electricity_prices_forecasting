@@ -61,6 +61,7 @@ def sarima_predict(df, column, training_start_index,training_end_index, predicti
     right_most_index = min(n, training_end_index + 2 * prediction_length)
 
     plt.figure(figsize=(8, 4))
+    plt.grid()    
     plt.title("S-ARIMA Forecast")
     plt.plot(df[column][left_most_index: training_start_index], color="royalblue", label="historical data")
     plt.plot(df[column][training_start_index: training_end_index], color="green", label="context")

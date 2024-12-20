@@ -3,6 +3,7 @@ import numpy as np
 from chronos import ChronosPipeline
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from matplotlib import rc # used for increasing font size in plots
 
 from constants import *
 import utils
@@ -103,6 +104,7 @@ def chronos_predict(input_data: [float], column: str,
     if plot:
       print(version)
       plt.figure(figsize=(8, 4))
+      rc('font', size=15)
     
       # Map time steps to corresponding dates
       reference_dates = [utils.map_timestep_to_date(idx) for idx in range(left_most_index, context_start_index)]
@@ -124,12 +126,13 @@ def chronos_predict(input_data: [float], column: str,
       ]
     
       # Plotting with dates on the x-axis
-      plt.plot(reference_dates, input_data[column][left_most_index:context_start_index], color="royalblue", label="Reference Data")
+      plt.plot(reference_dates, input_data[column][left_most_index:context_start_index], color="royalblue", label="Historical Data")
       plt.plot(context_dates, input_data[column][context_start_index:context_end_index], color="green", label="Context Data")
       plt.plot(future_dates, input_data[column][context_end_index:right_most_index], color="royalblue")
       plt.plot(prediction_dates, median_predictions, color="tomato", label="Chronos Median Forecast")
       plt.fill_between(prediction_dates, low_predictions, high_predictions, color="tomato", alpha=0.3, label="95% Prediction Interval")
-      
+      plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
       # Add legend, labels, and grid
       plt.legend()
       plt.xlabel("Date")

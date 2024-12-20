@@ -1,5 +1,7 @@
 import re
 import matplotlib.pyplot as plt
+from matplotlib import rc # used for increasing font size in plots
+
 
 # Function to read log text from a file
 def read_log_file(file_path):
@@ -9,7 +11,8 @@ def read_log_file(file_path):
 
 # Path to the log file
 def plot_training_loss(file_name):
-        
+    rc('font', size=30)
+
     log_file_path = f'training_logs/{file_name}.txt'
 
     # Read the log text from the file

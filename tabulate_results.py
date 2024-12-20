@@ -33,6 +33,7 @@ def perform_tests(mse_values):
         test_stat, p_value = f_oneway(*values)
         test_type = "ANOVA"
     else:
+        print("Performing Kruskal-Wallis test")
         test_stat, p_value = kruskal(*values)
         test_type = "Kruskal-Wallis"
 
@@ -40,7 +41,8 @@ def perform_tests(mse_values):
     combined_data = np.concatenate(values)
     groups = np.concatenate([[name] * len(vals) for name, vals in mse_values.items()])
     tukey_result = pairwise_tukeyhsd(combined_data, groups) if all_normal else None
-
+    print("Tukey's HSD")
+    print(tukey_result)
     return {
         "normality": normality_results,
         "test_type": test_type,
@@ -79,7 +81,7 @@ def investigate_results(algorithm_names, data_segments):
         "chronos_base": "Chronos Base (200M params)",
         "chronos_large": "Chronos Large (710M params)",
         "arima": "ARIMA",
-        "gp": "Gaussian Process (Composite Kernel)",
+        "gp": "GP (Composite Kernel)",
         "chronos-tiny-336-48-8_000-alpha": "Chronos Tiny (FT on Alpha)",
         "chronos-tiny-336-48-8_000-beta": "Chronos Tiny (FT on Beta)",
         "chronos-tiny-336-48-8_000-delta": "Chronos Tiny (FT on Delta)",
@@ -133,11 +135,11 @@ def investigate_results(algorithm_names, data_segments):
             logl_values[algorithm_name] = np.array(data['ledger_logl'], dtype=float)
 
             # Check the normality of the data
-            print(f"Algorithm: {algo_latex_label}")
+            # print(f"Algorithm: {algo_latex_label}")
             # print("Normality test for MSE If p < 0.05, normality is rejected.")
-            _, p_value = shapiro(data['ledger_mse'])
-            print(f"Normality is {'' if p_value < 0.05 else 'not'} rejected")
-            print("Shapiro-Wilk p-value for Method 1:", p_value)
+            # _, p_value = shapiro(data['ledger_mse'])
+            # print(f"Normality is {'' if p_value < 0.05 else 'not'} rejected")
+            # print("Shapiro-Wilk p-value for Method 1:", p_value)
 
         # Capitalize the data segment
         data_set_label = data_segment.capitalize()
@@ -169,37 +171,43 @@ def investigate_results(algorithm_names, data_segments):
             for algorithm_name in algorithm_names:
                 for i in (sorted(list((mse_indeces_to_avoid)), reverse=True)):
                     mse_values[algorithm_name] = np.delete(mse_values[algorithm_name], i)
+                    nmse_values[algorithm_name] = np.delete(nmse_values[algorithm_name], i)
                     # can do for nmse as well
+            for metric, values in [("MSE", mse_values), ("NMSE", nmse_values), ]:
+                print(f"Statistical comparison for {metric}")
+                statistics = compute_statistics(values)
+                # print("MSE Statistics")
+                # for algo, stats in statistics.items():
+                #     print(f"{algo_latex_label_map[algo]}: {stats}")
 
-            statistics = compute_statistics(mse_values)
-            # print("MSE Statistics")
-            for algo, stats in statistics.items():
-                print(f"{algo_latex_label_map[algo]}: {stats}")
+                test_results = perform_tests(values)
+                print()
+                print("\\begin{table}[h]")
+                print("\\begin{tabular}{|l|c|c|}")
+                print("\\hline")
+                print(f"\\textbf{"{"}Method{"}"} & \\textbf{"{"}Mean {metric} ± SD{"}"} & \\textbf{"{"}95\% CI for Mean {metric}{"}"} \\\\")
+                print("\\hline")
+                # Add rows
+                for method, stats in statistics.items():
+                    mean_sd = f"{stats['mean']:.3f} ± {stats['std']:.3f}"
+                    ci = f"[{stats['ci'][0]:.3f}, {stats['ci'][1]:.3f}]"
+                    significance_asterisk = ""    
+                    if test_results["p_value"] < 0.001:
+                        significance_asterisk = "***"
+                    elif test_results["p_value"] < 0.01:
+                        significance_asterisk = "**"
+                    elif test_results["p_value"] < 0.05:
+                        significance_asterisk = "*"                
 
-            test_results = perform_tests(mse_values)
-
-            table = r"""\begin{table}[ht]
-                    \centering
-                    \caption{Statistical comparison of forecasting methods based on Mean Squared Error (MSE).}
-                    \label{tab:mse_comparison}
-                    \begin{tabular}{l S[table-format=1.3] S[table-format=1.3] S[table-format=1.3] l}
-                    \toprule
-                    \textbf{Method} & \textbf{Mean MSE ± SD} & \textbf{Median MSE} & \textbf{95\% CI for Mean MSE} & \textbf{Significant Difference} \\
-                    \midrule
-                    """
-            # Add rows
-            for method, stats in statistics.items():
-                mean_sd = f"{stats['mean']:.3f} ± {stats['std']:.3f}"
-                median = f"{stats['median']:.3f}"
-                ci = f"[{stats['ci'][0]:.3f}, {stats['ci'][1]:.3f}]"
-                significance = "Yes" if test_results["p_value"] < 0.05 else "No"
-                table += f"{algo_latex_label_map[method]} & {mean_sd} & {median} & {ci} & {significance} \\\\\n"
-            
-            table += r"""\bottomrule
-                    \end{tabular}
-                    \end{table}"""
-            print()
-            print(table)
+                    print(f"{algo_latex_label_map[method]} & {mean_sd} {(significance_asterisk)} & {ci}\\\\")
+                    print("\\hline")
+                print("\\end{tabular}")
+                print(" \\\\ \\\\")
+                print("* implies $\\text{p-value} < 0.05$, **, $\\text{p-value} < 0.01$, and ***, $\\text{p-value} < 0.001$")
+                print(f"\\caption{"{"}Statistical comparison of forecasting methods based on {metric}.{"}"}")
+                print(f"\\label{"{"}tab:{metric}_comparison_{data_segment}{"}"}")
+                print("\\end{table}")
+                print()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Investigate results in text files.')

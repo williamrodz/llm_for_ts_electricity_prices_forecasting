@@ -3,10 +3,13 @@ import json
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
+from matplotlib import rc # used for increasing font size in plots
 from scipy.stats import f_oneway, kruskal, ttest_rel, shapiro, wilcoxon
 
 
-def investigate_results(algorithm_names, data_segment, ledger_key, run_name):
+def investigate_results(algorithm_names, data_segment, ledger_key, save=False):
+    rc('font', size=12)
+    
     alog_latex_label_map = {
       "chronos_tiny": "Chronos Tiny (8M params)",        
       "chronos_mini": "Chronos Mini (20M params)",
@@ -60,12 +63,13 @@ def investigate_results(algorithm_names, data_segment, ledger_key, run_name):
     }
 
     plt.figure(figsize=(10, 6))
-    plt.title(f'Comparison of {ledger_key_map[ledger_key]} Values for Different Algorithms on {data_segment.capitalize()} Segment')
+    # plt.title(f'Comparison of {ledger_key_map[ledger_key]} Values for Different Algorithms on {data_segment.capitalize()} Segment')
+    plt.title(f'{data_segment.capitalize()} Segment')    
     plt.xlabel('Sliding Window Iteration Number')
     plt.ylabel(ledger_key_map[ledger_key])
 
     if ledger_key == "ledger_nmse":
-        plt.axhline(y=1, color='grey', linestyle='--', linewidth=1, label='Baseline (NMSE=1)')
+        plt.axhline(y=1, color='black', linestyle='--', linewidth=2, label='NMSE=1')
     
     method_ledgers = []
 
@@ -104,8 +108,11 @@ def investigate_results(algorithm_names, data_segment, ledger_key, run_name):
     
     plt.legend()
     plt.grid(True)
-    plt.savefig(f"results/plots/{run_name}.png", dpi=300)
-    plt.show()
+    algos = "_".join(algorithm_names)
+    if save:
+      plt.savefig(f"results/publication_plots/{ledger_key}_{data_segment}_{algos}.png", dpi=300)
+    else:
+      plt.show()
 
     # # MSE arrays for each method (replace with your data)
     # print(np.shape(method_ledgers))
@@ -156,8 +163,8 @@ if __name__ == "__main__":
     parser.add_argument('--algorithm_names', nargs='+', type=str, required=True, help='The names of the algorithms (space-separated list)')
     parser.add_argument('--data_segments', nargs='+', type=str, required=True, help='The data segments to look for (space-separated list)')
     parser.add_argument('--ledger_key', type=str, required=True, help='The ledger key to plot (e.g., ledger_mse, ledger_nmse, ledger_logl)')
-    parser.add_argument('--run_name', type=str, required=True, help='The name of the run to save the plot')
+    parser.add_argument('--save', type=bool, required=False, help='Whether to save the plot as an image file')
     args = parser.parse_args()
     
     for data_segment in args.data_segments:
-        investigate_results(args.algorithm_names, data_segment, args.ledger_key, args.run_name)
+        investigate_results(args.algorithm_names, data_segment, args.ledger_key, args.save)
