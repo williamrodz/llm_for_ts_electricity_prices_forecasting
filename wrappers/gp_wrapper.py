@@ -66,7 +66,12 @@ def gp_predict(df, column, training_start_index, training_end_index, prediction_
     train_data_time_steps_array = np.array(range(training_start_index, training_end_index)).reshape(-1, 1)
 
     # Fit to the training data
+    print(gp.get_params())
+    print("Fitting the GP model...")
     gp.fit(train_data_time_steps_array, normalized_training_data)
+
+    # Get final kernel hyper parameters
+    print(gp.get_params())
 
     # Make predictions
     forecast_index = np.array(range(train_data_time_steps_array[-1][0], train_data_time_steps_array[-1][0] + prediction_length))

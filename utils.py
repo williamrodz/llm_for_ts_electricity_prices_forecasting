@@ -3,8 +3,7 @@ import numpy as np
 import torch
 from chronos import ChronosPipeline
 from wrappers.chronos_wrapper import chronos_predict
-from wrappers.sarima_wrapper import sarima_predict
-from wrappers.arima_wrapper import arima_predict
+#from wrappers.sarima_wrapper import sarima_predict
 from wrappers.gp_wrapper import gp_predict
 from wrappers.lstm_wrapper import lstm_predict
 from tqdm import tqdm
@@ -241,7 +240,7 @@ def sliding_window_analysis(df,column,context_length,prediction_length):
   plot_error_comparison(results)
   return results
 
-def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_length, prediction_length,plot=False):
+def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_length, prediction_length,plot=False):  
   num_possible_iterations = len(df) - context_length - prediction_length + 1
 
   ledger_mse = np.array([])
@@ -307,6 +306,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
       elif algo == "sarima":
         algo_predictions = sarima_predict(df,column,context_start, context_finish,prediction_length,plot=plot)
       elif algo == "arima":
+        from wrappers.arima_wrapper import arima_predict
         algo_predictions, algo_sigma = arima_predict(df,column,context_start, context_finish,prediction_length,plot=plot)        
       elif algo == "gp":
           algo_predictions, algo_sigma = gp_predict(df,column, context_start, context_finish, prediction_length, plot=plot)
