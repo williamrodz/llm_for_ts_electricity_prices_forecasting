@@ -45,7 +45,7 @@ def chronos_2_predict(
         pipeline = Chronos2Pipeline.from_pretrained(
             "amazon/chronos-2",
             device_map=DEVICE_MAP,
-            torch_dtype=torch.bfloat16,
+            dtype=torch.bfloat16,
         )
 
     # Determine size of input time series
@@ -71,17 +71,17 @@ def chronos_2_predict(
     pred_df = pipeline.predict_df(
         context_dataframe,
         prediction_length=prediction_length,
-        quantile_levels=[0.025, 0.5, 0.975],  # 95% prediction interval
+        quantile_levels=[0.025, 0.975],  # 95% prediction interval
         id_column="id",
         timestamp_column="timestamp",
         target="target",
     )
 
     # Extract quantiles from the prediction DataFrame
-    # Chronos-2 returns columns like 'target_0.025', 'target_0.5', 'target_0.975'
-    low = pred_df['target_0.025'].values
-    median = pred_df['target_0.5'].values
-    high = pred_df['target_0.975'].values
+    # Chronos-2 returns columns: 'predictions' for median, '0.025', '0.975' for quantiles
+    low = pred_df['0.025'].values
+    median = pred_df['predictions'].values
+    high = pred_df['0.975'].values
 
     median_predictions = median
     low_predictions = low

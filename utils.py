@@ -277,6 +277,8 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
 
   ledger_mse = np.array([])
   ledger_nmse = np.array([])
+  ledger_mae = np.array([])
+  ledger_mape = np.array([])
   ledger_logl = np.array([])
   ledger_var_actual_values = np.array([])
   ledger_var_predictions = np.array([])
@@ -288,7 +290,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
     pipeline = Chronos2Pipeline.from_pretrained(
       "amazon/chronos-2",
       device_map=DEVICE_MAP,
-      torch_dtype=torch.bfloat16,
+      dtype=torch.bfloat16,
     )
   elif algo.startswith("chronos_") or algo.startswith("chronos-"):
     valid_chronos_sizes = {"tiny", "mini", "small", "base", "large"}
@@ -375,6 +377,14 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
       nmse = calculate_nmse(actual_values, algo_predictions)
       ledger_nmse = np.append(ledger_nmse,nmse)
 
+      # Calculate Mean Absolute Error
+      mae = calculate_mae(actual_values, algo_predictions)
+      ledger_mae = np.append(ledger_mae, mae)
+
+      # Calculate Mean Absolute Percentage Error
+      mape = mean_absolute_percentage_error(actual_values, algo_predictions)
+      ledger_mape = np.append(ledger_mape, mape)
+
       # Calculate Log Likelihood
       log_likelihood = calculate_log_likelihood(actual_values, algo_predictions, algo_sigma)
       ledger_logl = np.append(ledger_logl,log_likelihood)
@@ -405,9 +415,11 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   data_set_mean = np.mean(df[column])
 
 
-  # Mean MSE and NMSE
+  # Mean MSE, NMSE, MAE, MAPE
   mean_mse = np.mean(ledger_mse[~np.isnan(ledger_mse)])
   mean_nmse = np.mean(ledger_nmse[~np.isnan(ledger_nmse)])
+  mean_mae = np.mean(ledger_mae[~np.isnan(ledger_mae)])
+  mean_mape = np.mean(ledger_mape[~np.isnan(ledger_mape)])
 
   # Save results in a txt file
   algo_results = {
@@ -421,11 +433,15 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
     "successful_run_percentage": num_successful_runs / num_possible_iterations * 100,
     "mean_mse": mean_mse,
     "mean_nmse": mean_nmse,
+    "mean_mae": mean_mae,
+    "mean_mape": mean_mape,
     "elapsed_hours": elapsed_hours,
     "num_possible_iterations": num_possible_iterations,
     "num_successful_runs": num_successful_runs,
     "ledger_mse": ledger_mse,
     "ledger_nmse": ledger_nmse,
+    "ledger_mae": ledger_mae,
+    "ledger_mape": ledger_mape,
     "ledger_logl": ledger_logl,      
     }
   output_message = f"\nResults for {algo}:\n"

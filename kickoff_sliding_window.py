@@ -47,10 +47,21 @@ delta = {
     "prediction_length": 48
     }
 
+pr_grid_load_data = {
+    "csv_title": "pr_grid_load_data",
+    "data_title": "pr_grid_load_data",
+    "subsection_start": "2026-01-01",
+    "subsection_end": "2026-01-30",
+    "data_column": "current_demand",
+    "context_window_length": 7 * 48,
+    "prediction_length": 48
+}
+
 intended_data_dict = {
     "alpha": alpha,
     "beta": beta,
-    "delta": delta
+    "delta": delta,
+    "pr_grid": pr_grid_load_data
 }
 
 def generate_data_subsection_csvs():
@@ -97,7 +108,20 @@ def main():
     prediction_length = config["prediction_length"]
 
     df = pd.read_csv(f"{DATA_FOLDER}/{csv_title}.csv")
-    df_to_slide_on = df[subsection_start:subsection_end]
+
+    # Filter by subsection - supports both int indices and date strings
+    if isinstance(subsection_start, int) and isinstance(subsection_end, int):
+        # Index-based filtering
+        df_to_slide_on = df[subsection_start:subsection_end]
+    elif isinstance(subsection_start, str) and isinstance(subsection_end, str):
+        # Date-based filtering (inclusive start, exclusive end)
+        df['timestamp'] = pd.to_datetime(df['timestamp']).dt.tz_localize(None)
+        start_dt = pd.to_datetime(subsection_start)
+        end_dt = pd.to_datetime(subsection_end)
+        df_to_slide_on = df[(df['timestamp'] >= start_dt) & (df['timestamp'] < end_dt)]
+        df_to_slide_on = df_to_slide_on.reset_index(drop=True)
+    else:
+        raise ValueError("subsection_start and subsection_end must both be int or both be date strings")
 
     # For debugging
     #minimum_running_length = context_window_length + prediction_length
