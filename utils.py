@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
 import torch
-from chronos import ChronosPipeline
+from chronos import ChronosPipeline, Chronos2Pipeline
 from wrappers.chronos_wrapper import chronos_predict
+from wrappers.chronos_2_wrapper import chronos_2_predict
 #from wrappers.sarima_wrapper import sarima_predict
 from wrappers.gp_wrapper import gp_predict
 from wrappers.lstm_wrapper import lstm_predict
@@ -131,9 +132,40 @@ def calculate_nmse(y_true, y_pred):
 def calculate_rmse(actual_values, predicted_values):
   return sqrt(calculate_mse(actual_values, predicted_values))
 
+def calculate_mae(y_true, y_pred):
+  """
+  Calculate the Mean Absolute Error (MAE).
+
+  MAE = (1/n) * sum(|y_true - y_pred|)
+
+  :param y_true: array-like, true values
+  :param y_pred: array-like, predicted values
+  :return: float, mean absolute error
+  """
+  y_true = np.asarray(y_true)
+  y_pred = np.asarray(y_pred)
+  return np.mean(np.abs(y_true - y_pred))
+
 def mean_absolute_percentage_error(y_true, y_pred):
+  """
+  Calculate Mean Absolute Percentage Error (MAPE).
+
+  MAPE = (100/n) * sum(|y_true - y_pred| / |y_true|)
+
+  Note: Excludes samples where y_true is zero to avoid division by zero.
+
+  :param y_true: array-like, true values
+  :param y_pred: array-like, predicted values
+  :return: float, mean absolute percentage error
+  """
   y_true, y_pred = np.array(y_true), np.array(y_pred)
-  return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+  # Filter out zero values in y_true to avoid division by zero
+  non_zero_mask = y_true != 0
+  if not np.any(non_zero_mask):
+    return np.nan
+  y_true_filtered = y_true[non_zero_mask]
+  y_pred_filtered = y_pred[non_zero_mask]
+  return np.mean(np.abs((y_true_filtered - y_pred_filtered) / y_true_filtered)) * 100
 
 def find_first_occurrence_index(df, date_string, date_column):
     """
@@ -249,7 +281,16 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   ledger_var_actual_values = np.array([])
   ledger_var_predictions = np.array([])
 
-  if algo.startswith("chronos_") or algo.startswith("chronos-"):
+  if algo == "chronos_2":
+    # Initialize Chronos-2 pipeline
+    print("= = = = >")
+    print("Initializing Chronos-2 pipeline...\n")
+    pipeline = Chronos2Pipeline.from_pretrained(
+      "amazon/chronos-2",
+      device_map=DEVICE_MAP,
+      torch_dtype=torch.bfloat16,
+    )
+  elif algo.startswith("chronos_") or algo.startswith("chronos-"):
     valid_chronos_sizes = {"tiny", "mini", "small", "base", "large"}
 
     if algo.startswith("chronos_"):
@@ -262,20 +303,20 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
         print(f"Initializing Chronos {suffix} pipeline...\n")
         pipeline = ChronosPipeline.from_pretrained(
         f"amazon/chronos-t5-{suffix}",
-        device_map=DEVICE_MAP,  
+        device_map=DEVICE_MAP,
         torch_dtype=torch.bfloat16,
         )
       else:
-        raise ValueError(f"Invalid Chronos model size: {suffix}. Valid sizes are: {valid_chronos_sizes}")   
-    
+        raise ValueError(f"Invalid Chronos model size: {suffix}. Valid sizes are: {valid_chronos_sizes}")
+
     elif "-" in algo:
       print("= = = = >")
       print(f"Initializing CUSTOM Chronos {algo} pipeline...\n")
       pipeline = ChronosPipeline.from_pretrained(
       f"froyoresearcher/{algo}",
-      device_map=DEVICE_MAP,  
+      device_map=DEVICE_MAP,
       torch_dtype=torch.bfloat16,
-      )      
+      )
     else:
       raise ValueError(f"Invalid Chronos model size: {suffix}. Valid sizes are: {valid_chronos_sizes}")
   welcome_message = "- - - - - - - - -- - - - - - - - - - - - - - - \n"
@@ -301,7 +342,9 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
       algo_sigma = None
 
       # Summon designated algorithm
-      if algo.startswith("chronos"):
+      if algo == "chronos_2":
+        algo_predictions, algo_sigma = chronos_2_predict(df, column, context_start, context_finish, prediction_length=prediction_length, plot=plot, pipeline=pipeline)
+      elif algo.startswith("chronos"):
         algo_predictions, algo_sigma = chronos_predict(df, column, context_start, context_finish, prediction_length, plot=plot, pipeline=pipeline)
       elif algo == "sarima":
         algo_predictions = sarima_predict(df,column,context_start, context_finish,prediction_length,plot=plot)
@@ -414,7 +457,10 @@ def compare_prediction_methods(df, data_column, date_column, context_start, cont
   
   joint_results = {}
   for method in methods:
-    if method.startswith("chronos"):
+    if method == "chronos_2":
+      chronos_2_predictions, chronos_2_sigma = chronos_2_predict(df, data_column, context_start, context_finish, prediction_length=prediction_length, plot=plot, run_name=run_name)
+      joint_results[method] = {"predictions": chronos_2_predictions, "sigma": chronos_2_sigma}
+    elif method.startswith("chronos"):
       chronos_predictions, chronos_sigma = chronos_predict(df, data_column, context_start,context_finish, prediction_length, plot=plot, version=method, run_name=run_name)
       joint_results[method] = {"predictions":chronos_predictions, "sigma":chronos_sigma}
     elif method == "sarima":

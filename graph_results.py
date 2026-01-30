@@ -11,11 +11,12 @@ def investigate_results(algorithm_names, data_segment, ledger_key, save=False):
     rc('font', size=12)
     
     alog_latex_label_map = {
-      "chronos_tiny": "Chronos Tiny (8M params)",        
+      "chronos_tiny": "Chronos Tiny (8M params)",
       "chronos_mini": "Chronos Mini (20M params)",
       "chronos_small": "Chronos Small (46M params)",
       "chronos_base": "Chronos Base (200M params)",
       "chronos_large": "Chronos Large (710M params)",
+      "chronos_2": "Chronos-2",
       "arima": "ARIMA",
       "gp": "Gaussian Process (Composite Kernel)",
       "chronos-tiny-336-48-8_000-alpha": "Chronos Tiny Fined Tuned on Alpha ",
@@ -26,11 +27,12 @@ def investigate_results(algorithm_names, data_segment, ledger_key, save=False):
     }
 
     algorithm_color_map = {
-        "chronos_tiny": "red",        
+        "chronos_tiny": "red",
         "chronos_mini": "red",
         "chronos_small": "pink",
         "chronos_base": "pink",
         "chronos_large": "purple",
+        "chronos_2": "darkblue",
         "arima": "orange",
         "gp": "green",
         "chronos-tiny-336-48-8_000-alpha": "#2381c1",
@@ -41,11 +43,12 @@ def investigate_results(algorithm_names, data_segment, ledger_key, save=False):
       }
 
     algorithm_linestyle_map = {
-        "chronos_tiny": "-",        
+        "chronos_tiny": "-",
         "chronos_mini": "--",
         "chronos_small": "-.",
         "chronos_base": "-",
-        "chronos_large": "-",        
+        "chronos_large": "-",
+        "chronos_2": "-",
       "arima": '-',             # Dashed line
       "gp": '-',                # Dash-dot line
       "chronos-tiny-336-48-8_000-alpha": '-',      # Dotted line

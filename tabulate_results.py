@@ -80,6 +80,7 @@ def investigate_results(algorithm_names, data_segments):
         "chronos_small": "Chronos Small (46M params)",
         "chronos_base": "Chronos Base (200M params)",
         "chronos_large": "Chronos Large (710M params)",
+        "chronos_2": "Chronos-2",
         "arima": "ARIMA",
         "gp": "GP (Composite Kernel)",
         "chronos-tiny-336-48-8_000-alpha": "Chronos Tiny (FT on Alpha)",
