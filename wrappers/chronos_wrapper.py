@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import pandas as pd
 from chronos import ChronosPipeline
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -8,14 +9,17 @@ from matplotlib import rc # used for increasing font size in plots
 from constants import *
 import utils
 
-def chronos_predict(input_data: [float], column: str,
-  context_start_index: int,
-  context_end_index: int,
-  prediction_length: int,
-  pipeline=None,
-  plot=True,
-  version="small",
-  run_name=None
+def chronos_predict(
+    input_data: [float],
+    column: str,
+    context_start_index: int,
+    context_end_index: int,
+    context_slice: pd.Series,
+    prediction_length: int,
+    pipeline=None,
+    plot=True,
+    version="small",
+    run_name=None
   ):
     """
     input:
@@ -71,13 +75,20 @@ def chronos_predict(input_data: [float], column: str,
       
     context_slice = input_data[column][context_start_index:context_end_index]
     context_data_tensor = torch.tensor(context_slice.tolist())
-
+    
+    # The context dataframe must have 'item_id', 'timestamp', 'target' columns
+    print("length of context_slice.index", len(context_slice.index))
+    print(" length of context_slice.values", len(context_slice.values))
+    length_of_context_slice = len(context_slice)
+    context_dataframe = pd.DataFrame({
+      'item_id': [0] * length_of_context_slice,
+      'timestamp': context_slice.index,
+      'target': context_slice.values
+    }, index=context_slice.index)
     # Predict time series
-    forecast = pipeline.predict(
-        context=context_data_tensor,
+    forecast = pipeline.predict_df(
+        context_dataframe,
         prediction_length=prediction_length,
-        num_samples=CHRONOS_NUM_SAMPLES_DEFAULT,
-        limit_prediction_length=False
     )
 
     # Get the quantiles for the 80% prediction interval
