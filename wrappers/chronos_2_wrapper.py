@@ -63,11 +63,11 @@ def chronos_2_predict(
     if 'timestamp' in input_data.columns:
         timestamps = context_slice['timestamp'].values
 
-    context_dataframe = pd.DataFrame({
-        'id': [0] * length_of_context_slice,
-        'timestamp': timestamps,
-        'target': context_slice[column].values
-    })
+    # Apply id column value to all rows
+    context_dataframe = context_slice.copy()
+    context_dataframe.loc[:, 'id'] = 0
+    # Rename column as 'target'
+    context_dataframe = context_dataframe.rename(columns={column: 'target'})
 
     # Generate predictions using Chronos-2
     # Returns DataFrame with quantile predictions

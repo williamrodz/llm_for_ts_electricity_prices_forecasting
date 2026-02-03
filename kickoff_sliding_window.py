@@ -50,8 +50,8 @@ delta = {
 pr_grid_load_data = {
     "csv_title": "pr_grid_load_data",
     "data_title": "pr_grid_load_data",
-    "subsection_start": "2025-04-05",
-    "subsection_end": "2025-07-13",
+    "subsection_start": "2026-01-01",
+    "subsection_end": "2026-01-31",
     "data_column": "current_demand",
     "context_window_length": 7 * 48,
     "prediction_length": 48
@@ -128,7 +128,7 @@ def main():
 
     # Resample pr_grid data to regular intervals with gap filling
     if intended_data == "pr_grid":
-        frequency_to_resample_to = '30min'
+        frequency_to_resample_to = '15min'
         df_to_slide_on = utils.resample_to_regular_intervals(
             df_to_slide_on,
             timestamp_column='timestamp',
