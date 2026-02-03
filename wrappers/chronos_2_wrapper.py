@@ -44,8 +44,7 @@ def chronos_2_predict(
         print("= = = > Chronos-2 pipeline not initialized. Loading amazon/chronos-2...")
         pipeline = Chronos2Pipeline.from_pretrained(
             "amazon/chronos-2",
-            device_map=DEVICE_MAP,
-            dtype=torch.bfloat16,
+            device_map=DEVICE_MAP
         )
 
     # Determine size of input time series
@@ -55,16 +54,20 @@ def chronos_2_predict(
         raise ValueError("Both context_start_index and context_end_index must be integers")
 
     # Extract context slice
-    context_slice = input_data[column][context_start_index:context_end_index]
+    context_slice = input_data[context_start_index:context_end_index]
     length_of_context_slice = len(context_slice)
 
     # Build context dataframe with required columns for Chronos-2
-    # Chronos-2 expects: id_column, timestamp_column, and target column
+    # Chronos-2 expects: id, timestamp, and target columns with REGULAR frequency
+    # Use actual timestamps if available, otherwise create synthetic ones
+    if 'timestamp' in input_data.columns:
+        timestamps = context_slice['timestamp'].values
+
     context_dataframe = pd.DataFrame({
         'id': [0] * length_of_context_slice,
-        'timestamp': context_slice.index,
-        'target': context_slice.values
-    }, index=context_slice.index)
+        'timestamp': timestamps,
+        'target': context_slice[column].values
+    })
 
     # Generate predictions using Chronos-2
     # Returns DataFrame with quantile predictions

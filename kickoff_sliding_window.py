@@ -50,8 +50,8 @@ delta = {
 pr_grid_load_data = {
     "csv_title": "pr_grid_load_data",
     "data_title": "pr_grid_load_data",
-    "subsection_start": "2026-01-01",
-    "subsection_end": "2026-01-30",
+    "subsection_start": "2025-04-05",
+    "subsection_end": "2025-07-13",
     "data_column": "current_demand",
     "context_window_length": 7 * 48,
     "prediction_length": 48
@@ -109,6 +109,9 @@ def main():
 
     df = pd.read_csv(f"{DATA_FOLDER}/{csv_title}.csv")
 
+    if "timestamp" in df.columns:
+        df = df.sort_values("timestamp")
+
     # Filter by subsection - supports both int indices and date strings
     if isinstance(subsection_start, int) and isinstance(subsection_end, int):
         # Index-based filtering
@@ -122,6 +125,20 @@ def main():
         df_to_slide_on = df_to_slide_on.reset_index(drop=True)
     else:
         raise ValueError("subsection_start and subsection_end must both be int or both be date strings")
+
+    # Resample pr_grid data to regular intervals with gap filling
+    if intended_data == "pr_grid":
+        frequency_to_resample_to = '30min'
+        df_to_slide_on = utils.resample_to_regular_intervals(
+            df_to_slide_on,
+            timestamp_column='timestamp',
+            freq=frequency_to_resample_to,
+            fill_gaps='interpolate'  # Required for Chronos-2 (needs regular timestamps)
+        )
+        print(f"Resampled to {frequency_to_resample_to} intervals with interpolation: {len(df_to_slide_on)} samples")
+        print(df_to_slide_on.head())
+        # Check for gaps after resampling
+        utils.check_timestamp_gaps(df_to_slide_on, timestamp_column='timestamp', expected_freq=frequency_to_resample_to)
 
     # For debugging
     #minimum_running_length = context_window_length + prediction_length

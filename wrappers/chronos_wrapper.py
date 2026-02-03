@@ -14,7 +14,7 @@ def chronos_predict(
     column: str,
     context_start_index: int,
     context_end_index: int,
-    context_slice: pd.Series,
+    # context_slice: pd.Series,
     prediction_length: int,
     pipeline=None,
     plot=True,
@@ -56,7 +56,6 @@ def chronos_predict(
         pipeline = ChronosPipeline.from_pretrained(
           f"froyoresearcher/{version}",
           device_map=DEVICE_MAP,  
-          torch_dtype=torch.bfloat16,
         )
       else:
         # Cut out the chronos leading text
@@ -77,8 +76,6 @@ def chronos_predict(
     context_data_tensor = torch.tensor(context_slice.tolist())
     
     # The context dataframe must have 'item_id', 'timestamp', 'target' columns
-    print("length of context_slice.index", len(context_slice.index))
-    print(" length of context_slice.values", len(context_slice.values))
     length_of_context_slice = len(context_slice)
     context_dataframe = pd.DataFrame({
       'item_id': [0] * length_of_context_slice,
@@ -86,25 +83,26 @@ def chronos_predict(
       'target': context_slice.values
     }, index=context_slice.index)
     # Predict time series
-    forecast = pipeline.predict_df(
+    pred_df = pipeline.predict_df(
         context_dataframe,
         prediction_length=prediction_length,
+        quantile_levels=[0.025, 0.975],  # 95% prediction interval
     )
 
-    # Get the quantiles for the 80% prediction interval
-    #low, median, high = np.quantile(forecast[0].numpy(), [0.1, 0.5, 0.9], axis=0)
-
-    # Get the quantiles for the 95% prediction interval
-    low, median, high = np.quantile(forecast[0].numpy(), [0.025, 0.5, 0.975], axis=0)    
+    # Extract quantiles from the prediction DataFrame
+    # Chronos returns columns: 'predictions' for median, '0.025', '0.975' for quantiles
+    low = pred_df['0.025'].values
+    median = pred_df['predictions'].values
+    high = pred_df['0.975'].values
 
     # Append predictions
     median_predictions = median
     low_predictions = low
     high_predictions = high
 
-    # Compute the standard deviation
-    # Calculate the standard deviation across the sample dimension
-    std_devs = np.std(forecast[0].numpy(), axis=0)      
+    # Estimate standard deviation from the 95% prediction interval
+    # For a normal distribution: 95% CI = mean +/- 1.96*std
+    std_devs = (high - low) / (2 * 1.96)      
 
     num_median_predictions = len(median_predictions)
 

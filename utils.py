@@ -13,6 +13,223 @@ import json
 import time
 import os
 
+
+def check_timestamp_gaps(df, timestamp_column='timestamp', expected_freq='5min'):
+    """
+    Check for gaps in timestamp data and report statistics.
+
+    Args:
+        df: DataFrame with a timestamp column
+        timestamp_column: Name of the timestamp column
+        expected_freq: Expected frequency between timestamps (e.g., '5min', '1h')
+
+    Returns:
+        Dictionary with gap statistics
+    """
+    df = df.copy()
+    df[timestamp_column] = pd.to_datetime(df[timestamp_column])
+    df = df.sort_values(timestamp_column)
+
+    # Calculate time differences between consecutive rows
+    time_diffs = df[timestamp_column].diff().dropna()
+
+    # Convert expected frequency to timedelta
+    expected_td = pd.Timedelta(expected_freq)
+
+    # Find gaps (differences larger than expected)
+    gaps = time_diffs[time_diffs > expected_td]
+
+    # Calculate expected number of intervals
+    total_time_span = df[timestamp_column].max() - df[timestamp_column].min()
+    expected_td = pd.Timedelta(expected_freq)
+    expected_intervals = int(total_time_span / expected_td) + 1
+    filled_intervals = len(df)
+    fill_percentage = (filled_intervals / expected_intervals) * 100 if expected_intervals > 0 else 0
+
+    # Calculate statistics
+    stats = {
+        'total_rows': len(df),
+        'expected_freq': expected_freq,
+        'num_gaps': len(gaps),
+        'total_time_span': total_time_span,
+        'expected_intervals': expected_intervals,
+        'filled_intervals': filled_intervals,
+        'fill_percentage': fill_percentage,
+        'min_diff': time_diffs.min(),
+        'max_diff': time_diffs.max(),
+        'mean_diff': time_diffs.mean(),
+        'median_diff': time_diffs.median(),
+    }
+
+    print("=" * 60)
+    print("Timestamp Gap Analysis")
+    print("=" * 60)
+    print(f"Total rows:          {stats['total_rows']}")
+    print(f"Time span:           {stats['total_time_span']}")
+    print(f"Expected frequency:  {expected_freq}")
+    print(f"Min time diff:       {stats['min_diff']}")
+    print(f"Max time diff:       {stats['max_diff']}")
+    print(f"Mean time diff:      {stats['mean_diff']}")
+    print(f"Median time diff:    {stats['median_diff']}")
+    print(f"Number of gaps:      {stats['num_gaps']} (intervals > {expected_freq})")
+
+    if len(gaps) > 0:
+        print("\nTop 10 largest gaps:")
+        print("-" * 40)
+        gap_df = pd.DataFrame({
+            'timestamp': df[timestamp_column].iloc[gaps.index],
+            'gap_duration': gaps.values
+        }).sort_values('gap_duration', ascending=False).head(10)
+        for _, row in gap_df.iterrows():
+            print(f"  {row['timestamp']}: gap of {row['gap_duration']}")
+
+    # ASCII visualization of data density over time
+    print("\nData density timeline (each char = 1 hour):")
+    print("-" * 60)
+
+    # Create hourly buckets
+    start_time = df[timestamp_column].min().floor('h')
+    end_time = df[timestamp_column].max().ceil('h')
+    total_hours = int((end_time - start_time).total_seconds() / 3600)
+
+    # Count data points per hour
+    df_temp = df.copy()
+    df_temp['hour_bucket'] = df_temp[timestamp_column].dt.floor('h')
+    hourly_counts = df_temp.groupby('hour_bucket').size()
+
+    # Determine display width (max 80 chars for timeline)
+    display_width = min(total_hours, 120)
+    hours_per_char = max(1, total_hours // display_width)
+
+    # Build ASCII representation
+    # Calculate max possible data points per bucket (12 five-minute slots per hour)
+    slots_per_bucket = hours_per_char * 12
+
+    timeline = []
+    for i in range(0, total_hours, hours_per_char):
+        bucket_start = start_time + pd.Timedelta(hours=i)
+        bucket_end = bucket_start + pd.Timedelta(hours=hours_per_char)
+
+        # Count data points in this display bucket
+        count = 0
+        for h in range(hours_per_char):
+            hour = bucket_start + pd.Timedelta(hours=h)
+            if hour in hourly_counts.index:
+                count += hourly_counts[hour]
+
+        # Calculate fill percentage for this bucket
+        bucket_fill_pct = (count / slots_per_bucket) * 100 if slots_per_bucket > 0 else 0
+
+        # Map fill percentage to digit (0-9)
+        # ' '=0%, 1=1-9%, 2=10-19%, 3=20-29%, ... 9=80%+
+        if count == 0:
+            timeline.append(' ')
+        elif bucket_fill_pct < 10:
+            timeline.append('1')
+        elif bucket_fill_pct < 20:
+            timeline.append('2')
+        elif bucket_fill_pct < 30:
+            timeline.append('3')
+        elif bucket_fill_pct < 40:
+            timeline.append('4')
+        elif bucket_fill_pct < 50:
+            timeline.append('5')
+        elif bucket_fill_pct < 60:
+            timeline.append('6')
+        elif bucket_fill_pct < 70:
+            timeline.append('7')
+        elif bucket_fill_pct < 80:
+            timeline.append('8')
+        else:
+            timeline.append('9')
+
+    # Print with day markers
+    timeline_str = ''.join(timeline)
+    chars_per_day = max(1, 24 // hours_per_char)
+
+    print(f"Start: {start_time}")
+    print(f"End:   {end_time}")
+    print(f"Scale: {hours_per_char} hour(s) per character")
+    print()
+    print("Legend: ' '=0%  1=1-9%  2=10-19%  3=20-29% ... 9=80%+")
+    print()
+
+    # Print timeline in rows of 60 chars with day labels
+    row_width = 60
+    for i in range(0, len(timeline_str), row_width):
+        row = timeline_str[i:i+row_width]
+        day_offset = (i * hours_per_char) // 24
+        print(f"Day {day_offset:2d}: [{row}]")
+
+    print()
+    print(f"Expected intervals:  {stats['expected_intervals']}")
+    print(f"Filled intervals:    {stats['filled_intervals']}")
+    print(f"Fill percentage:     {stats['fill_percentage']:.1f}%")
+    print("=" * 60)
+
+    return stats
+
+
+def resample_to_regular_intervals(df, timestamp_column='timestamp', freq='5min', fill_gaps='interpolate'):
+    """
+    Resample a DataFrame with irregular timestamps to regular intervals.
+
+    Uses the mean of values within each interval for numeric columns.
+    Optionally fills gaps to ensure perfectly regular timestamps (required by Chronos-2).
+
+    Args:
+        df: DataFrame with a timestamp column
+        timestamp_column: Name of the timestamp column
+        freq: Frequency string for resampling (e.g., '5min', '1h', '30min')
+        fill_gaps: Strategy for filling gaps in the resampled data:
+            - 'interpolate': Linear interpolation between known values (recommended)
+            - 'ffill': Forward-fill with last known value
+            - 'bfill': Back-fill with next known value
+            - None: Drop empty intervals (results in irregular timestamps)
+
+    Returns:
+        DataFrame resampled to regular intervals with reset index.
+        If fill_gaps is set, all intervals will be filled (no gaps).
+
+    Note:
+        For use with Chronos-2, fill_gaps must be set to a non-None value
+        since Chronos-2 requires perfectly regular timestamp intervals.
+    """
+    df = df.copy()
+
+    # Ensure timestamp is datetime
+    df[timestamp_column] = pd.to_datetime(df[timestamp_column])
+
+    # Set timestamp as index for resampling
+    df = df.set_index(timestamp_column)
+
+    # Select only numeric columns for resampling
+    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+
+    # Resample and take mean of each interval
+    df_resampled = df[numeric_cols].resample(freq).mean()
+
+    # Fill gaps based on strategy
+    if fill_gaps == 'interpolate':
+        df_resampled = df_resampled.interpolate(method='linear')
+        # Handle edge NaNs that interpolate can't fill
+        df_resampled = df_resampled.bfill().ffill()
+    elif fill_gaps == 'ffill':
+        df_resampled = df_resampled.ffill().bfill()
+    elif fill_gaps == 'bfill':
+        df_resampled = df_resampled.bfill().ffill()
+    elif fill_gaps is None:
+        # Drop rows where all values are NaN (empty intervals)
+        df_resampled = df_resampled.dropna(how='all')
+    else:
+        raise ValueError(f"Invalid fill_gaps value: {fill_gaps}. Use 'interpolate', 'ffill', 'bfill', or None.")
+
+    # Reset index to make timestamp a column again
+    df_resampled = df_resampled.reset_index()
+
+    return df_resampled
+
+
 def map_timestep_to_date(row_index):
     """
     Maps an integer row index to the corresponding date in the 'Valid_From_UTC' column.
@@ -420,6 +637,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   mean_nmse = np.mean(ledger_nmse[~np.isnan(ledger_nmse)])
   mean_mae = np.mean(ledger_mae[~np.isnan(ledger_mae)])
   mean_mape = np.mean(ledger_mape[~np.isnan(ledger_mape)])
+  median_mape = np.median(ledger_mape[~np.isnan(ledger_mape)])
 
   # Save results in a txt file
   algo_results = {
@@ -435,6 +653,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
     "mean_nmse": mean_nmse,
     "mean_mae": mean_mae,
     "mean_mape": mean_mape,
+    "median_mape":median_mape,
     "elapsed_hours": elapsed_hours,
     "num_possible_iterations": num_possible_iterations,
     "num_successful_runs": num_successful_runs,
