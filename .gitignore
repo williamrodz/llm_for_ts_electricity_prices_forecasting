@@ -3,7 +3,6 @@
 *.py[cod]
 *$py.class
 
-
 # C extensions
 *.so
 
@@ -52,3 +51,4 @@ uv.lock
 
 # Old venv (can be removed after migration)
 forecasting/
+results/*

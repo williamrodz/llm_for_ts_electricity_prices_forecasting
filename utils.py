@@ -230,6 +230,24 @@ def resample_to_regular_intervals(df, timestamp_column='timestamp', freq='5min',
     return df_resampled
 
 
+def add_weekday_column(df, timestamp_column='timestamp'):
+    """
+    Add a 'weekday' column to a DataFrame indicating if the timestamp falls on a weekday.
+
+    Args:
+        df: DataFrame with a timestamp column
+        timestamp_column: Name of the timestamp column
+
+    Returns:
+        Copy of DataFrame with a new 'weekday' column (True for Mon-Fri, False for Sat-Sun)
+    """
+    df = df.copy()
+    df[timestamp_column] = pd.to_datetime(df[timestamp_column])
+    # dayofweek: Monday=0, Sunday=6. Weekdays are 0-4.
+    df['weekday'] = df[timestamp_column].dt.dayofweek < 5
+    return df
+
+
 def map_timestep_to_date(row_index):
     """
     Maps an integer row index to the corresponding date in the 'Valid_From_UTC' column.

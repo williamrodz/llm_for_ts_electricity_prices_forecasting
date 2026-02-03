@@ -53,28 +53,39 @@ def chronos_2_predict(
     if isinstance(context_start_index, str) or isinstance(context_end_index, str):
         raise ValueError("Both context_start_index and context_end_index must be integers")
 
-    # Extract context slice
-    context_slice = input_data[context_start_index:context_end_index]
-    length_of_context_slice = len(context_slice)
-
     # Build context dataframe with required columns for Chronos-2
     # Chronos-2 expects: id, timestamp, and target columns with REGULAR frequency
     # Use actual timestamps if available, otherwise create synthetic ones
-    if 'timestamp' in input_data.columns:
-        timestamps = context_slice['timestamp'].values
 
     # Apply id column value to all rows
-    context_dataframe = context_slice.copy()
+    context_dataframe = input_data.copy()
     context_dataframe.loc[:, 'id'] = 0
     # Rename column as 'target'
     context_dataframe = context_dataframe.rename(columns={column: 'target'})
 
+    # Extract context slice
+    context_slice_df = context_dataframe[context_start_index:context_end_index]
+    length_of_context_slice = len(context_slice_df)
+
+    # Create future dataframe with covariates and without the target column
+    future_dataframe = context_dataframe.copy()
+    future_dataframe = future_dataframe[context_end_index:context_end_index + prediction_length]
+    future_dataframe.drop(columns=['target'], inplace=True)
+    # Print the columns names of the future dataframe
+    # print("Future DataFrame Columns")
+    # print(future_dataframe.columns)
+    # print("Context Slice DataFrame Tail")
+    # print(context_slice_df.tail())
+    # print("Future DataFrame Head")
+    # print(future_dataframe.head())
+
     # Generate predictions using Chronos-2
     # Returns DataFrame with quantile predictions
     pred_df = pipeline.predict_df(
-        context_dataframe,
+        context_slice_df,
+        # future_df=future_dataframe,
         prediction_length=prediction_length,
-        quantile_levels=[0.025, 0.975],  # 95% prediction interval
+        quantile_levels=[0.1, 0.5, 0.9],
         id_column="id",
         timestamp_column="timestamp",
         target="target",
@@ -82,9 +93,9 @@ def chronos_2_predict(
 
     # Extract quantiles from the prediction DataFrame
     # Chronos-2 returns columns: 'predictions' for median, '0.025', '0.975' for quantiles
-    low = pred_df['0.025'].values
+    low = pred_df['0.1'].values
     median = pred_df['predictions'].values
-    high = pred_df['0.975'].values
+    high = pred_df['0.9'].values
 
     median_predictions = median
     low_predictions = low
