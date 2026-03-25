@@ -381,26 +381,25 @@ def calculate_mae(y_true, y_pred):
   y_pred = np.asarray(y_pred)
   return np.mean(np.abs(y_true - y_pred))
 
-def mean_absolute_percentage_error(y_true, y_pred):
+def calculate_absolute_percentage_error(y_true, y_pred):
   """
-  Calculate Mean Absolute Percentage Error (MAPE).
+  Calculate Absolute Percentage Error (APE) for each element.
 
-  MAPE = (100/n) * sum(|y_true - y_pred| / |y_true|)
+  APE_i = |y_true_i - y_pred_i| / |y_true_i|
 
-  Note: Excludes samples where y_true is zero to avoid division by zero.
+  Excludes samples where y_true is zero to avoid division by zero.
 
   :param y_true: array-like, true values
   :param y_pred: array-like, predicted values
-  :return: float, mean absolute percentage error
+  :return: numpy.ndarray of absolute percentage errors (as floats)
   """
-  y_true, y_pred = np.array(y_true), np.array(y_pred)
-  # Filter out zero values in y_true to avoid division by zero
+  y_true = np.asarray(y_true)
+  y_pred = np.asarray(y_pred)
   non_zero_mask = y_true != 0
-  if not np.any(non_zero_mask):
-    return np.nan
-  y_true_filtered = y_true[non_zero_mask]
-  y_pred_filtered = y_pred[non_zero_mask]
-  return np.mean(np.abs((y_true_filtered - y_pred_filtered) / y_true_filtered)) * 100
+  ape = np.full_like(y_true, np.nan, dtype=np.float64)
+  ape[non_zero_mask] = np.abs((y_true[non_zero_mask] - y_pred[non_zero_mask]) / y_true[non_zero_mask])
+  return ape * 100
+
 
 def find_first_occurrence_index(df, date_string, date_column):
     """
@@ -507,7 +506,7 @@ def sliding_window_analysis(df,column,context_length,prediction_length):
   plot_error_comparison(results)
   return results
 
-def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_length, prediction_length,plot=False):  
+def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_length, prediction_length,subsection_start,subsection_end,plot=False):  
   num_possible_iterations = len(df) - context_length - prediction_length + 1
 
   ledger_mse = np.array([])
@@ -558,7 +557,6 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
       raise ValueError(f"Invalid Chronos model size: {suffix}. Valid sizes are: {valid_chronos_sizes}")
   welcome_message = "- - - - - - - - -- - - - - - - - - - - - - - - \n"
   welcome_message += f"Starting sliding window analysis for {algo}\n"
-  welcome_message += ("Note: This will take more time with a smaller context window and longer dataset.\n")
   welcome_message += (f"- Algorithm:                {algo}\n")
   welcome_message += (f"- Context length:           {context_length}\n")
   welcome_message += (f"- Prediction length:        {prediction_length}\n")
@@ -617,7 +615,7 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
       ledger_mae = np.append(ledger_mae, mae)
 
       # Calculate Mean Absolute Percentage Error
-      mape = mean_absolute_percentage_error(actual_values, algo_predictions)
+      mape = np.mean(calculate_absolute_percentage_error(actual_values, algo_predictions))
       ledger_mape = np.append(ledger_mape, mape)
 
       # Calculate Log Likelihood
@@ -658,35 +656,47 @@ def sliding_window_analysis_for_algorithm(algo, data_title, df,column,context_le
   median_mape = np.median(ledger_mape[~np.isnan(ledger_mape)])
 
   # Save results in a txt file
+   
   algo_results = {
     "algorithm": algo,
     "data_title": data_title,
+    "subsection_start": subsection_start,
+    "subsection_end": subsection_end,
+    "target_column": column,
     "dataset_length": dataset_length,
     "dataset_mean": data_set_mean,
     "dataset_variance": dataset_variance,
     "context_length": context_length,
     "prediction_length": prediction_length,
+    "num_possible_iterations": num_possible_iterations,
+    "num_successful_runs": num_successful_runs,
     "successful_run_percentage": num_successful_runs / num_possible_iterations * 100,
+    "elapsed_hours": elapsed_hours,
     "mean_mse": mean_mse,
     "mean_nmse": mean_nmse,
     "mean_mae": mean_mae,
     "mean_mape": mean_mape,
     "median_mape":median_mape,
-    "elapsed_hours": elapsed_hours,
-    "num_possible_iterations": num_possible_iterations,
-    "num_successful_runs": num_successful_runs,
     "ledger_mse": ledger_mse,
     "ledger_nmse": ledger_nmse,
     "ledger_mae": ledger_mae,
     "ledger_mape": ledger_mape,
     "ledger_logl": ledger_logl,      
     }
-  output_message = f"\nResults for {algo}:\n"
+  output_message = f"\nResults:\n"
 
-  for key,value in algo_results.items():
-    if key == "ledger_mse" or key == "ledger_nmse":
+  for key, value in algo_results.items():
+    # Skip ledger arrays in output
+    if key.startswith("ledger_"):
       continue
-    output_message += (f"- {key}: {value}\n")
+    # Format MAPE values with % sign
+    if "mape" in key.lower() and isinstance(value, (int, float)):
+      output_message += f"- {key}: {value:.2f}%\n"
+    # Round other numeric values to 2 decimals
+    elif isinstance(value, float):
+      output_message += f"- {key}: {value:.2f}\n"
+    else:
+      output_message += f"- {key}: {value}\n"
   print(output_message)
   
   # Save results to a text file

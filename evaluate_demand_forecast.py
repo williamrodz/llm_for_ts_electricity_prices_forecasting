@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import argparse
 from constants import DATA_FOLDER
-from utils import calculate_mae, mean_absolute_percentage_error
+from utils import calculate_mae, calculate_absolute_percentage_error
 
 
 def load_and_prepare_data(csv_path):
@@ -42,8 +42,7 @@ def evaluate_forecast_accuracy(df):
 
     # Calculate metrics
     mae = calculate_mae(actual, forecast)
-    mape = mean_absolute_percentage_error(actual, forecast)
-
+    ape = calculate_absolute_percentage_error(actual, forecast)
     # Additional statistics
     mean_error = np.mean(errors)  # Bias
     std_error = np.std(errors)
@@ -53,7 +52,7 @@ def evaluate_forecast_accuracy(df):
     results = {
         'num_samples': len(df),
         'mae': mae,
-        'mape': mape,
+        'ape': ape,
         'mean_error_bias': mean_error,
         'std_error': std_error,
         'max_abs_error': max_abs_error,
@@ -132,15 +131,16 @@ def main():
     print("Forecast Accuracy Metrics")
     print("-" * 60)
     print(f"Number of samples:         {results['num_samples']:,}")
+    print(f"Mean Actual Demand:        {results['mean_actual_demand']:.2f} MW")
+    print(f"Mean Forecast Demand:      {results['mean_forecast_demand']:.2f} MW")    
     print(f"Mean Absolute Error (MAE): {results['mae']:.2f} MW")
-    print(f"Mean Percentage Error:     {results['mape']:.2f}%")
     print(f"Mean Error (Bias):         {results['mean_error_bias']:.2f} MW")
     print(f"Std of Error:              {results['std_error']:.2f} MW")
     print(f"Max Absolute Error:        {results['max_abs_error']:.2f} MW")
     print(f"Min Absolute Error:        {results['min_abs_error']:.2f} MW")
+    print(f"Mean Percentage Error:     {np.mean(results['ape']) * 100:.2f}%")
+    print(f"Median Percentage Error:   {np.median(results['ape']) * 100:.2f}%")
     print("-" * 60)
-    print(f"Mean Actual Demand:        {results['mean_actual_demand']:.2f} MW")
-    print(f"Mean Forecast Demand:      {results['mean_forecast_demand']:.2f} MW")
     print("=" * 60)
 
     if args.verbose:

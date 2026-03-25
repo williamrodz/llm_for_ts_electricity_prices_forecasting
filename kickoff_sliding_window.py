@@ -111,6 +111,14 @@ def main():
 
     if "timestamp" in df.columns:
         df = df.sort_values("timestamp")
+    elif "Valid_From_UTC" in df.columns:
+        # rename the column to timestamp
+        df = df.rename(columns={"Valid_From_UTC": "timestamp"})
+    else:
+        raise ValueError("No timestamp column found in dataframe")
+    
+    # Add weekday column
+    df = utils.add_weekday_column(df, "timestamp")
 
     # Filter by subsection - supports both int indices and date strings
     if isinstance(subsection_start, int) and isinstance(subsection_end, int):
@@ -136,7 +144,7 @@ def main():
             fill_gaps='interpolate'  # Required for Chronos-2 (needs regular timestamps)
         )
         print(f"Resampled to {frequency_to_resample_to} intervals with interpolation: {len(df_to_slide_on)} samples")
-        print(df_to_slide_on.head())
+        #print(df_to_slide_on.head())
         # Check for gaps after resampling
         utils.check_timestamp_gaps(df_to_slide_on, timestamp_column='timestamp', expected_freq=frequency_to_resample_to)
 
@@ -145,7 +153,7 @@ def main():
     #extra_runs_for_debugging = 4
     #df_to_slide_on = df[:minimum_running_length + extra_runs_for_debugging]
 
-    results = utils.sliding_window_analysis_for_algorithm(algorithm,data_title, df_to_slide_on,data_column,context_window_length,prediction_length)
+    results = utils.sliding_window_analysis_for_algorithm(algorithm,data_title, df_to_slide_on,data_column,context_window_length,prediction_length,subsection_start,subsection_end)
 
 if __name__ == "__main__":
     main()
