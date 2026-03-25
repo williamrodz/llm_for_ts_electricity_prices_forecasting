@@ -12,8 +12,8 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 SPAIN_PREFIX = "marginalpdbc_"
 PORTUGAL_PREFIX = "marginalpdbcpt_"
 
-SPAIN_MASTER = OUTPUT_DIR / "spain_day_ahead.csv"
-PORTUGAL_MASTER = OUTPUT_DIR / "portugal_day_ahead.csv"
+SPAIN_MASTER = OUTPUT_DIR / "day_ahead_spain.csv"
+PORTUGAL_MASTER = OUTPUT_DIR / "day_ahead_portugal.csv"
 
 # -----------------------------
 # Helper functions
