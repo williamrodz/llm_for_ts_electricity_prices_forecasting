@@ -8,6 +8,7 @@ dependencies = [
     "pandas",
     "numpy",
     "matplotlib",
+    "OMIEData",
     "pmdarima",
     "torch",
     "scikit-learn",
@@ -15,6 +16,7 @@ dependencies = [
     "scipy",
     "tqdm",
     "gluonts",
+    "bs4>=0.0.2",
 ]
 
 [build-system]

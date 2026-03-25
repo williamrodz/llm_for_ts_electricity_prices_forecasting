@@ -140,3 +140,6 @@ After completing these steps, all the necessary packages specified in the `requi
 
 - Open and run the python notebooks listed above to see comparisons of forecasts of energy data 
 
+
+## OMIE Day-Ahead Price Data
+| Spain + Portugal | 2023-01-01 | 2026-03-26 | Day-ahead market only |
