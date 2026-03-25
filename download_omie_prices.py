@@ -15,8 +15,8 @@ RAW_DIR.mkdir(exist_ok=True)
 RETRY_COUNT = 2
 
 OMIE_PAGES = {
-    "Spain": "https://www.omie.es/en/file-access-list?parents=/Day-ahead%20Market/1.%20Prices&dir=%20Day-ahead%20market%20hourly%20prices%20in%20Spain&realdir=marginalpdbc",
-    "Portugal": "https://www.omie.es/en/file-access-list?parents=/Day-ahead%20Market/1.%20Prices&dir=%20Day-ahead%20market%20hourly%20prices%20in%20Portugal&realdir=marginalpdbp"
+    # "Spain": "https://www.omie.es/en/file-access-list?parents=/Day-ahead%20Market/1.%20Prices&dir=%20Day-ahead%20market%20hourly%20prices%20in%20Spain&realdir=marginalpdbc",
+    "Portugal": "https://www.omie.es/en/file-access-list?parents=/Day-ahead%20Market/1.%20Prices&dir=%20Day-ahead%20market%20hourly%20price%20in%20Portugal&realdir=marginalpdbcpt"
 }
 
 # -----------------------------
