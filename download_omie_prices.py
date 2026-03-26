@@ -30,7 +30,7 @@ def fetch_download_links(page_url):
     links = []
     for a in soup.find_all("a"):
         href = a.get("href")
-        if href and "file-download" in href and href.endswith(".1"):
+        if href and "file-download" in href and (href.endswith(".1") or href.endswith(".2") or href.endswith(".3") or href.endswith(".4")):
             # Convert relative href to full URL
             full_url = "https://www.omie.es" + href
             links.append(full_url)

@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MensajePrecios xmlns="http://www.omel.es/Schemas">
+  <IdMensaje v="MARGINALPDBCPT_20201118.1"/>
+  <VerMensaje v="1"/>
+  <FechaMensaje v="2020-11-17T11:44:04Z"/>
+  <IdRemitente v="18XOMIE-123456-T"/>
+  <IdPrecio v="PDBC"/>
+  <TipoMercado v="MD"/>
+  <Sesion fecha="2020-11-18"/>
+  <Horizonte v="2020-11-18T00:00+01:00/2020-11-18T24:00+01:00"/>
+  <SerieTemporal>
+    <IdSerieTemporal v="1"/>
+    <IdArea v="10YES-REE------0"/>
+    <UniPrecio v="EURO/MWh"/>
+    <Periodo>
+      <Dia v="2020-11-18"/>
+      <Val>
+        <Per v="1"/>
+        <Prc v="35.89"/>
+      </Val>
+      <Val>
+        <Per v="2"/>
+        <Prc v="33.39"/>
+      </Val>
+      <Val>
+        <Per v="3"/>
+        <Prc v="31.90"/>
+      </Val>
+      <Val>
+        <Per v="4"/>
+        <Prc v="30.25"/>
+      </Val>
+      <Val>
+        <Per v="5"/>
+        <Prc v="30.25"/>
+      </Val>
+      <Val>
+        <Per v="6"/>
+        <Prc v="32.68"/>
+      </Val>
+      <Val>
+        <Per v="7"/>
+        <Prc v="39.03"/>
+      </Val>
+      <Val>
+        <Per v="8"/>
+        <Prc v="46.07"/>
+      </Val>
+      <Val>
+        <Per v="9"/>
+        <Prc v="48.39"/>
+      </Val>
+      <Val>
+        <Per v="10"/>
+        <Prc v="45.98"/>
+      </Val>
+      <Val>
+        <Per v="11"/>
+        <Prc v="43.86"/>
+      </Val>
+      <Val>
+        <Per v="12"/>
+        <Prc v="42.73"/>
+      </Val>
+      <Val>
+        <Per v="13"/>
+        <Prc v="41.42"/>
+      </Val>
+      <Val>
+        <Per v="14"/>
+        <Prc v="41.80"/>
+      </Val>
+      <Val>
+        <Per v="15"/>
+        <Prc v="42.55"/>
+      </Val>
+      <Val>
+        <Per v="16"/>
+        <Prc v="43.08"/>
+      </Val>
+      <Val>
+        <Per v="17"/>
+        <Prc v="44.75"/>
+      </Val>
+      <Val>
+        <Per v="18"/>
+        <Prc v="46.97"/>
+      </Val>
+      <Val>
+        <Per v="19"/>
+        <Prc v="49.95"/>
+      </Val>
+      <Val>
+        <Per v="20"/>
+        <Prc v="51.69"/>
+      </Val>
+      <Val>
+        <Per v="21"/>
+        <Prc v="52.55"/>
+      </Val>
+      <Val>
+        <Per v="22"/>
+        <Prc v="50.51"/>
+      </Val>
+      <Val>
+        <Per v="23"/>
+        <Prc v="48.14"/>
+      </Val>
+      <Val>
+        <Per v="24"/>
+        <Prc v="45.19"/>
+      </Val>
+    </Periodo>
+  </SerieTemporal>
+  <SerieTemporal>
+    <IdSerieTemporal v="2"/>
+    <IdArea v="10YPT-REN------W"/>
+    <UniPrecio v="EURO/MWh"/>
+    <Periodo>
+      <Dia v="2020-11-18"/>
+      <Val>
+        <Per v="1"/>
+        <Prc v="35.89"/>
+      </Val>
+      <Val>
+        <Per v="2"/>
+        <Prc v="33.39"/>
+      </Val>
+      <Val>
+        <Per v="3"/>
+        <Prc v="31.90"/>
+      </Val>
+      <Val>
+        <Per v="4"/>
+        <Prc v="30.25"/>
+      </Val>
+      <Val>
+        <Per v="5"/>
+        <Prc v="30.25"/>
+      </Val>
+      <Val>
+        <Per v="6"/>
+        <Prc v="32.68"/>
+      </Val>
+      <Val>
+        <Per v="7"/>
+        <Prc v="39.03"/>
+      </Val>
+      <Val>
+        <Per v="8"/>
+        <Prc v="46.07"/>
+      </Val>
+      <Val>
+        <Per v="9"/>
+        <Prc v="46.80"/>
+      </Val>
+      <Val>
+        <Per v="10"/>
+        <Prc v="45.98"/>
+      </Val>
+      <Val>
+        <Per v="11"/>
+        <Prc v="43.86"/>
+      </Val>
+      <Val>
+        <Per v="12"/>
+        <Prc v="42.73"/>
+      </Val>
+      <Val>
+        <Per v="13"/>
+        <Prc v="41.42"/>
+      </Val>
+      <Val>
+        <Per v="14"/>
+        <Prc v="41.80"/>
+      </Val>
+      <Val>
+        <Per v="15"/>
+        <Prc v="42.55"/>
+      </Val>
+      <Val>
+        <Per v="16"/>
+        <Prc v="43.08"/>
+      </Val>
+      <Val>
+        <Per v="17"/>
+        <Prc v="44.75"/>
+      </Val>
+      <Val>
+        <Per v="18"/>
+        <Prc v="46.97"/>
+      </Val>
+      <Val>
+        <Per v="19"/>
+        <Prc v="49.95"/>
+      </Val>
+      <Val>
+        <Per v="20"/>
+        <Prc v="51.69"/>
+      </Val>
+      <Val>
+        <Per v="21"/>
+        <Prc v="52.55"/>
+      </Val>
+      <Val>
+        <Per v="22"/>
+        <Prc v="50.51"/>
+      </Val>
+      <Val>
+        <Per v="23"/>
+        <Prc v="48.14"/>
+      </Val>
+      <Val>
+        <Per v="24"/>
+        <Prc v="45.19"/>
+      </Val>
+    </Periodo>
+  </SerieTemporal>
+</MensajePrecios>

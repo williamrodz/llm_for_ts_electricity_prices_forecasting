@@ -20,7 +20,7 @@ PORTUGAL_MASTER = OUTPUT_DIR / "day_ahead_portugal.csv"
 # -----------------------------
 def parse_file(file_path):
     """
-    Parse a .1 raw file into long format: YYYYMMDD, HH:MM, price
+    Parse a raw file (.1/.2/.3) into long format: YYYYMMDD, HH:MM, price
     """
     rows = []
     with open(file_path, "r", encoding="utf-8") as f:
@@ -45,14 +45,14 @@ def parse_file(file_path):
 
 def process_files(prefix, output_file, market_name):
     # Find all files with the given prefix
-    files = sorted(RAW_DIR.glob(f"{prefix}*.1"))
+    files = sorted(f for ext in (".1", ".2", ".3", ".4") for f in RAW_DIR.glob(f"{prefix}*{ext}"))
     all_rows = []
     for file_path in tqdm(files, desc=f"Processing {market_name} files"):
         all_rows.extend(parse_file(file_path))
     # Create DataFrame
     df = pd.DataFrame(all_rows, columns=["YYYYMMDD", "HH:MM", "price"])
-    # Sort by date and hour
-    df = df.sort_values(["YYYYMMDD", "HH:MM"])
+    # Sort by date and hour, then drop exact duplicates
+    df = df.sort_values(["YYYYMMDD", "HH:MM"]).drop_duplicates(subset=["YYYYMMDD", "HH:MM"])
     # Save CSV
     df.to_csv(output_file, index=False)
 
