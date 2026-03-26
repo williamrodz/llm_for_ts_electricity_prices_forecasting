@@ -124,6 +124,7 @@ def create_multivariate_dataset(price_csv, output_csv, country_name):
     df["minute"] = df["timestamp"].dt.minute
     df["day_of_week"] = df["timestamp"].dt.weekday
     df["month"] = df["timestamp"].dt.month
+    df["day_of_month"] = df["timestamp"].dt.day
 
     # Safe DST calculation
     if df["timestamp"].dt.tz is None:
@@ -155,7 +156,7 @@ def create_multivariate_dataset(price_csv, output_csv, country_name):
         df = df.merge(wdf, on="timestamp", how="left")
 
     # Keep timestamp for sorting but do not include in final features yet
-    base_cols = ["year","month", "hour", "minute", "price", "is_weekend_holiday", "day_of_week", "is_dst"]
+    base_cols = ["year", "month", "day_of_month", "hour", "minute", "price", "is_weekend_holiday", "day_of_week", "is_dst"]
     all_cols = ["timestamp"] + base_cols
     weather_cols = [c for c in df.columns if c not in ["YYYYMMDD", "HH:MM", "timestamp"] + base_cols]
     all_cols.extend(weather_cols)
