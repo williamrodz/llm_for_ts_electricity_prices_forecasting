@@ -20,24 +20,27 @@ PORTUGAL_MASTER = OUTPUT_DIR / "day_ahead_portugal.csv"
 # -----------------------------
 def parse_file(file_path):
     """
-    Parse a raw file (.1/.2/.3) into long format: YYYYMMDD, HH:MM, price
+    Parse a raw file (.1/.2/.3/.4) into long format: YYYYMMDD, HH:MM, price.
+    Handles both hourly (periods 1-24/25) and 15-minute (periods 1-96+) formats.
+    The format is detected per-file by counting data rows.
     """
     rows = []
     with open(file_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
-    # Skip the first line (header)
-    for line in lines[1:]:
-        line = line.strip()
-        if not line:
-            continue
+    data_lines = [l.strip() for l in lines[1:] if l.strip() and len(l.strip().split(";")) >= 5]
+    is_quarterly = len(data_lines) > 25  # DST hourly days have at most 25 rows
+    for line in data_lines:
         parts = line.split(";")
-        if len(parts) < 5:
-            continue  # skip malformed lines
-        year, month, day, hour, price = parts[0], parts[1], parts[2], parts[3], parts[4]
+        year, month, day, period_str, price = parts[0], parts[1], parts[2], parts[3], parts[4]
         yyyymmdd = f"{year}{month.zfill(2)}{day.zfill(2)}"
-        hhmm = f"{hour.zfill(2)}:00"
+        period = int(period_str)
+        if is_quarterly:
+            total_minutes = period * 15
+            hhmm = f"{total_minutes // 60:02d}:{total_minutes % 60:02d}"
+        else:
+            hhmm = f"{period:02d}:00"
         try:
-            price_val = float(price.replace(",", "."))  # handle comma decimal if present
+            price_val = float(price.replace(",", "."))
         except ValueError:
             price_val = None
         rows.append([yyyymmdd, hhmm, price_val])
@@ -66,7 +69,7 @@ def process_files(prefix, output_file, market_name):
         print(f"\n{market_name} Summary:")
         print(f"First available date: {first_date}")
         print(f"Last available date: {last_date}")
-        print(f"Total hourly records: {total_rows}\n")
+        print(f"Total price records: {total_rows}\n")
     else:
         print(f"\n{market_name} Summary: No data found.\n")
 
