@@ -76,9 +76,108 @@ def process_files(prefix, output_file, market_name):
 # -----------------------------
 # Main
 # -----------------------------
+
+# -----------------------------
+# Multivariate dataset creation
+# -----------------------------
+def create_multivariate_dataset(price_csv, output_csv, country_name):
+    """
+    Create multivariate dataset with:
+    price, is_weekend_holiday, hour, day_of_week, month, is_dst, + weather features.
+    All timestamps aligned in UTC.
+    """
+    df = pd.read_csv(price_csv)
+
+    # Ensure string types before concatenation (robust to int columns)
+    df["YYYYMMDD"] = df["YYYYMMDD"].astype(str)
+    df["HH:MM"] = df["HH:MM"].astype(str).str.zfill(5)
+
+    df["timestamp"] = pd.to_datetime(
+        df["YYYYMMDD"] + " " + df["HH:MM"],
+        format="%Y%m%d %H:%M",
+        errors="coerce"
+    )
+
+    # Drop rows where timestamp failed to parse
+    df = df.dropna(subset=["timestamp"])
+
+    # Handle DST edge cases:
+    # - nonexistent times (spring forward) → shift forward
+    # - ambiguous times (fall back) → drop ambiguous rows
+    df = df.sort_values("timestamp")  # ensure chronological
+    df["timestamp"] = df["timestamp"].dt.tz_localize(
+        "Europe/Madrid",
+        nonexistent="shift_forward",
+        ambiguous="NaT"
+    )
+
+    # Drop any rows that became NaT due to ambiguous fall-back
+    df = df.dropna(subset=["timestamp"])
+
+    df["timestamp"] = df["timestamp"].dt.tz_convert("UTC")
+
+    # Time-based features
+    df["hour"] = df["timestamp"].dt.hour
+    df["day_of_week"] = df["timestamp"].dt.weekday
+    df["month"] = df["timestamp"].dt.month
+
+    # Safe DST calculation
+    if df["timestamp"].dt.tz is None:
+        df["timestamp"] = df["timestamp"].dt.tz_localize("UTC")
+    df["is_dst"] = df["timestamp"].apply(lambda x: bool(x.dst()))
+
+    # Weekend flag
+    df["is_weekend_holiday"] = df["day_of_week"] >= 5
+
+    # -----------------------------
+    # Merge weather data
+    # -----------------------------
+    weather_files = list(Path("data").glob("weather_*.csv"))
+
+    for wf in weather_files:
+        city_name = wf.stem.replace("weather_", "")
+        wdf = pd.read_csv(wf)
+
+        if "timestamp" not in wdf.columns:
+            continue
+
+        wdf["timestamp"] = pd.to_datetime(wdf["timestamp"], utc=True)
+
+        # Prefix weather columns
+        weather_cols = [c for c in wdf.columns if c != "timestamp"]
+        wdf = wdf.rename(columns={c: f"{city_name}_{c}" for c in weather_cols})
+
+        # Merge on UTC timestamp
+        df = df.merge(wdf, on="timestamp", how="left")
+
+    # Keep timestamp for sorting but do not include in final features yet
+    base_cols = ["price", "is_weekend_holiday", "hour", "day_of_week", "month", "is_dst"]
+    all_cols = ["timestamp"] + base_cols
+    weather_cols = [c for c in df.columns if c not in ["YYYYMMDD", "HH:MM", "timestamp"] + base_cols]
+    all_cols.extend(weather_cols)
+
+    df = df[all_cols]
+
+    # Sort by timestamp
+    df = df.sort_values("timestamp")
+
+    # Drop timestamp column after sorting
+    df = df.drop(columns=["timestamp"])
+
+    # Save
+    df.to_csv(output_csv, index=False)
+
+    print(f"{country_name} multivariate dataset saved to {output_csv}")
+
+
 def main():
     process_files(SPAIN_PREFIX, SPAIN_MASTER, "Spain")
     process_files(PORTUGAL_PREFIX, PORTUGAL_MASTER, "Portugal")
+
+    # Create multivariate datasets
+    create_multivariate_dataset(SPAIN_MASTER, OUTPUT_DIR / "day_ahead_spain_multivariate.csv", "Spain")
+    create_multivariate_dataset(PORTUGAL_MASTER, OUTPUT_DIR / "day_ahead_portugal_multivariate.csv", "Portugal")
+
     print("Processing complete for both Spain and Portugal.")
 
 if __name__ == "__main__":
