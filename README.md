@@ -143,3 +143,25 @@ After completing these steps, all the necessary packages specified in the `requi
 
 ## OMIE Day-Ahead Price Data
 | Spain + Portugal | 2023-01-01 | 2026-03-26 | Day-ahead market only |
+
+## PJM Day-Ahead LMP Data
+
+Downloaded via `download_pjm_prices.py` using the PJM Data Miner 2 API. Data is stored in `data/day_ahead_pjm_{pnode_id}.csv`.
+
+### Column reference
+
+| Column | Description |
+|---|---|
+| `timestamp_utc` | Hour-beginning timestamp in UTC |
+| `pnode_id` | Numeric pricing node ID (e.g. 51291 = AECO) |
+| `pnode_name` | Human-readable node name |
+| `total_lmp_da` | Total day-ahead LMP ($/MWh) — the all-in price at this node |
+| `system_energy_price_da` | Energy component ($/MWh) — system-wide marginal cost of energy, uniform across the grid |
+| `congestion_price_da` | Congestion component ($/MWh) — cost/benefit from transmission constraints; can be negative when the node is downstream of a bottleneck |
+| `marginal_loss_price_da` | Loss component ($/MWh) — adjustment for transmission line losses relative to the reference bus |
+
+The following identity always holds:
+
+```
+total_lmp_da = system_energy_price_da + congestion_price_da + marginal_loss_price_da
+```
