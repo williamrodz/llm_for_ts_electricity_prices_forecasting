@@ -46,10 +46,25 @@ def date_windows(start: date, end: date, window: int = WINDOW_DAYS):
         current = chunk_end + timedelta(days=1)
 
 
+def _is_archive_error(resp: requests.Response) -> bool:
+    """Return True if the 400 response is the PJM 'archived data' restriction."""
+    try:
+        errors = resp.json().get("errors", [])
+        return any("archived data" in e.get("message", "").lower() for e in errors)
+    except Exception:
+        return False
+
+
 def fetch_page(pnode_id: int, window_from: date, window_to: date, start_row: int) -> tuple[pd.DataFrame, int]:
     """
     Fetch one page of day-ahead LMP data via GET.
     Date range must be within 366 days.
+
+    For historical (archived) windows the API rejects pnode_id, fields, sort, and
+    order filters. In that case we fall back to a type=ZONE request (22 zone nodes,
+    ~192K rows/year) and trim the response to the requested node client-side.
+    NOTE: this fallback only works for zone-level pnode IDs.
+
     Returns (DataFrame, total_rows).
     """
     if not API_KEY:
@@ -73,17 +88,41 @@ def fetch_page(pnode_id: int, window_from: date, window_to: date, start_row: int
     for attempt in range(1, RETRY_COUNT + 1):
         try:
             resp = requests.get(PJM_API_URL, params=params, headers=headers, timeout=60)
+
             if resp.status_code == 429:
                 wait = 30 * attempt
                 print(f"\n  Rate limited — waiting {wait}s (attempt {attempt}/{RETRY_COUNT})...")
                 time.sleep(wait)
                 continue
+
+            if resp.status_code == 400 and _is_archive_error(resp):
+                # Archived windows reject pnode_id/fields/sort/order.
+                # type=ZONE is still accepted and returns only the 22 zone nodes
+                # (~192K rows/year vs ~104M unfiltered), then we trim client-side.
+                archive_params = {
+                    "datetime_beginning_utc": date_range,
+                    "type":                   "ZONE",
+                    "row_is_current":         "TRUE",
+                    "rowCount":               PAGE_SIZE,
+                    "startRow":               start_row,
+                }
+                resp = requests.get(PJM_API_URL, params=archive_params, headers=headers, timeout=60)
+                resp.raise_for_status()
+                j = resp.json()
+                items = j.get("items", [])
+                total = j.get("totalRows", len(items))
+                df = pd.DataFrame(items)
+                if not df.empty and "pnode_id" in df.columns:
+                    df = df[df["pnode_id"] == pnode_id].reset_index(drop=True)
+                return df, total
+
             if resp.status_code == 400:
                 try:
                     err = resp.json().get("errors", resp.text)
                 except Exception:
                     err = resp.text
                 raise RuntimeError(f"400 Bad Request: {err}")
+
             resp.raise_for_status()
             j = resp.json()
             if "errors" in j:
@@ -91,6 +130,7 @@ def fetch_page(pnode_id: int, window_from: date, window_to: date, start_row: int
             items = j.get("items", [])
             total = j.get("totalRows", len(items))
             return pd.DataFrame(items), total
+
         except RuntimeError:
             raise
         except Exception as e:
