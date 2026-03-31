@@ -213,3 +213,83 @@ python download_nordpool_prices.py --area SE_3 --start 2018-01-01 --end 2025-01-
 | `BE` | Belgium | Belgium (single zone) |
 | `AT` | Austria | Austria (single zone) |
 | `GB` | Great Britain | Great Britain (N2EX day-ahead market) |
+
+## GB Day-Ahead Price Data
+
+Downloaded via `download_gb_prices.py` using the [Elexon Insights API](https://bmrs.elexon.co.uk) (Market Index Data / APXMIDP). No API key required. Data is stored in `data/day_ahead_gb_APXMIDP_{MMYY}_{MMYY}.csv`. Available from **2018-01-01** onwards.
+
+> **Note:** GB left the EU internal energy market on 1 Jan 2021, so ENTSO-E data for `GB` only covers up to Dec 2020. Use this script for 2021 onwards (or for the full range).
+
+### Usage
+
+```sh
+# Full history from 2018 to today
+python download_gb_prices.py
+
+# From Brexit onwards only
+python download_gb_prices.py --start 2021-01-01
+
+# Custom range
+python download_gb_prices.py --start 2022-01-01 --end 2024-12-31
+```
+
+### Column reference
+
+| Column | Description |
+|---|---|
+| `timestamp_utc` | Period-start timestamp in UTC |
+| `settlementDate` | GB settlement date (local) |
+| `settlementPeriod` | Half-hour slot 1–48 (1 = 00:00–00:30 local) |
+| `price_gbp_mwh` | Day-ahead clearing price in £/MWh |
+| `volume` | Volume traded in MWh |
+| `dataProvider` | Always `APXMIDP` (EPEX SPOT GB) |
+
+Resolution is **half-hourly (30 min)** — 48 periods per day. Currency is **GBP**, not EUR.
+
+## City Weather Data
+
+Downloaded via `download_city_weather.py` using [Meteostat](https://meteostat.net). No API key required. Data is stored in `data/weather_{city}.csv`. Covers one representative city per Nord Pool bidding zone, plus Madrid and Lisbon (OMIE).
+
+### Usage
+
+```sh
+# All 23 cities (2015 → today)
+python download_city_weather.py
+
+# Single city
+python download_city_weather.py --cities london
+
+# Multiple cities
+python download_city_weather.py --cities oslo stockholm helsinki london
+
+# Custom date range
+python download_city_weather.py --start 2018-01-01 --cities berlin paris amsterdam
+```
+
+### City reference
+
+| City key | Station | Bidding zone |
+|---|---|---|
+| `oslo` | Oslo Blindern | NO1 |
+| `kristiansand` | Kristiansand Kjevik | NO2 |
+| `trondheim` | Trondheim Vaernes | NO3 |
+| `tromso` | Tromsø Airport | NO4 |
+| `bergen` | Bergen Florida | NO5 |
+| `lulea` | Luleå Airport | SE1 |
+| `sundsvall` | Sundsvall-Härnösand | SE2 |
+| `stockholm` | Stockholm Arlanda | SE3 |
+| `malmo` | Malmö Airport | SE4 |
+| `aarhus` | Aarhus (Tirstrup) | DK1 |
+| `copenhagen` | Copenhagen Kastrup | DK2 |
+| `helsinki` | Helsinki Vantaa | FI |
+| `tallinn` | Tallinn Airport | EE |
+| `riga` | Riga Airport | LV |
+| `vilnius` | Vilnius Airport | LT |
+| `berlin` | Berlin-Tegel | DE_LU |
+| `paris` | Paris Charles de Gaulle | FR |
+| `amsterdam` | Amsterdam Schiphol | NL |
+| `brussels` | Brussels Zaventem | BE |
+| `vienna` | Vienna Schwechat | AT |
+| `london` | London Heathrow | GB |
+| `madrid` | Madrid-Barajas | OMIE (Spain) |
+| `lisbon` | Lisbon Humberto Delgado | OMIE (Portugal) |
