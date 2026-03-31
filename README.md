@@ -165,3 +165,51 @@ The following identity always holds:
 ```
 total_lmp_da = system_energy_price_da + congestion_price_da + marginal_loss_price_da
 ```
+
+## Nord Pool Day-Ahead Price Data
+
+Downloaded via `download_nordpool_prices.py` using the [ENTSO-E Transparency Platform](https://transparency.entsoe.eu) REST API (`entsoe-py`). Requires a free API key stored as `ENTSOE_KEY` in `.env`. Data is stored in `data/day_ahead_nordpool_{area}.csv`. Historical data available from **2015-01-05** onwards.
+
+### Usage
+
+```sh
+# Default: Norway NO2, 2015 → today
+python download_nordpool_prices.py
+
+# Specific zone and date range
+python download_nordpool_prices.py --area FI --start 2018-01-01
+python download_nordpool_prices.py --area SE_3 --start 2018-01-01 --end 2025-01-01
+```
+
+### Column reference
+
+| Column | Description |
+|---|---|
+| `timestamp_utc` | Hour-beginning timestamp in UTC |
+| `price_eur_mwh` | Day-ahead price in EUR/MWh |
+
+### Bidding zone reference
+
+| Area code | Country | Zone description |
+|---|---|---|
+| `NO_1` | Norway | Oslo / Southeast Norway |
+| `NO_2` | Norway | Kristiansand / Southwest Norway |
+| `NO_3` | Norway | Trondheim / Central Norway |
+| `NO_4` | Norway | Tromsø / Northern Norway |
+| `NO_5` | Norway | Bergen / West Norway |
+| `SE_1` | Sweden | Luleå / Northern Sweden |
+| `SE_2` | Sweden | Sundsvall / North-Central Sweden |
+| `SE_3` | Sweden | Stockholm / South-Central Sweden (largest zone) |
+| `SE_4` | Sweden | Malmö / Southern Sweden |
+| `DK_1` | Denmark | Jutland & Funen / West Denmark (connects to Continental Europe) |
+| `DK_2` | Denmark | Zealand / East Denmark (connects to Nordic grid) |
+| `FI` | Finland | Finland (single zone) |
+| `EE` | Estonia | Estonia (single zone) |
+| `LV` | Latvia | Latvia (single zone) |
+| `LT` | Lithuania | Lithuania (single zone) |
+| `DE_LU` | Germany/Luxembourg | Germany & Luxembourg (single price zone) |
+| `FR` | France | France (single zone) |
+| `NL` | Netherlands | Netherlands (single zone) |
+| `BE` | Belgium | Belgium (single zone) |
+| `AT` | Austria | Austria (single zone) |
+| `GB` | Great Britain | Great Britain (N2EX day-ahead market) |

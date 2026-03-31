@@ -14,13 +14,15 @@ load_dotenv()
 # Config
 # -----------------------------
 PJM_API_URL  = "https://api.pjm.com/api/v1/da_hrl_lmps"
-API_KEY      = os.environ.get("PJM_API_KEY", "")  # set via: export PJM_API_KEY=your_key
-DEFAULT_NODE = 51291       # Western Hub — change or pass via --node
+API_KEY      = os.environ.get("PJM_API_KEY", "")
+DEFAULT_NODE = 51291
 START_DATE   = "2018-01-01"
 PAGE_SIZE    = 50_000
 WINDOW_DAYS  = 365         # API max date range is 366 days
-RETRY_COUNT  = 3
+RETRY_COUNT  = 3           # retries for non-rate-limit errors
+MAX_429      = 5           # retries for rate limit (429)
 OUTPUT_DIR   = Path("data")
+RAW_DIR      = Path("data/raw")
 
 FIELDS = ",".join([
     "datetime_beginning_utc",
@@ -33,6 +35,7 @@ FIELDS = ",".join([
 ])
 
 OUTPUT_DIR.mkdir(exist_ok=True)
+RAW_DIR.mkdir(exist_ok=True)
 
 # -----------------------------
 # Helper functions
@@ -46,6 +49,18 @@ def date_windows(start: date, end: date, window: int = WINDOW_DAYS):
         current = chunk_end + timedelta(days=1)
 
 
+def _get_with_retry(url: str, params: dict, headers: dict) -> requests.Response:
+    """GET with exponential backoff on 429. Raises RuntimeError after MAX_429 attempts."""
+    for attempt in range(1, MAX_429 + 1):
+        resp = requests.get(url, params=params, headers=headers, timeout=60)
+        if resp.status_code != 429:
+            return resp
+        wait = 60 * attempt
+        print(f"\n  Rate limited — waiting {wait}s (attempt {attempt}/{MAX_429})...")
+        time.sleep(wait)
+    raise RuntimeError("Rate limit: all retries exhausted. Try again later.")
+
+
 def _is_archive_error(resp: requests.Response) -> bool:
     """Return True if the 400 response is the PJM 'archived data' restriction."""
     try:
@@ -57,21 +72,19 @@ def _is_archive_error(resp: requests.Response) -> bool:
 
 def fetch_page(pnode_id: int, window_from: date, window_to: date, start_row: int) -> tuple[pd.DataFrame, int]:
     """
-    Fetch one page of day-ahead LMP data via GET.
-    Date range must be within 366 days.
+    Fetch one page of day-ahead LMP data.
 
     For historical (archived) windows the API rejects pnode_id, fields, sort, and
-    order filters. In that case we fall back to a type=ZONE request (22 zone nodes,
-    ~192K rows/year) and trim the response to the requested node client-side.
-    NOTE: this fallback only works for zone-level pnode IDs.
+    order. Falls back to type=ZONE (22 zone nodes, ~192K rows/year) and filters
+    client-side. Only works for zone-level pnode IDs.
 
     Returns (DataFrame, total_rows).
     """
     if not API_KEY:
         raise ValueError("PJM_API_KEY environment variable is not set.")
 
-    # API expects: "yyyy-MM-dd HH:mm to yyyy-MM-dd HH:mm"
     date_range = f"{window_from:%Y-%m-%d} 00:00 to {window_to:%Y-%m-%d} 23:00"
+    headers = {"Ocp-Apim-Subscription-Key": API_KEY}
 
     params = {
         "datetime_beginning_utc": date_range,
@@ -83,22 +96,15 @@ def fetch_page(pnode_id: int, window_from: date, window_to: date, start_row: int
         "order":                  "Asc",
         "sort":                   "datetime_beginning_ept",
     }
-    headers = {"Ocp-Apim-Subscription-Key": API_KEY}
 
     for attempt in range(1, RETRY_COUNT + 1):
         try:
-            resp = requests.get(PJM_API_URL, params=params, headers=headers, timeout=60)
-
-            if resp.status_code == 429:
-                wait = 30 * attempt
-                print(f"\n  Rate limited — waiting {wait}s (attempt {attempt}/{RETRY_COUNT})...")
-                time.sleep(wait)
-                continue
+            resp = _get_with_retry(PJM_API_URL, params, headers)
 
             if resp.status_code == 400 and _is_archive_error(resp):
                 # Archived windows reject pnode_id/fields/sort/order.
-                # type=ZONE is still accepted and returns only the 22 zone nodes
-                # (~192K rows/year vs ~104M unfiltered), then we trim client-side.
+                # type=ZONE returns only the 22 zone nodes (~192K rows/year),
+                # then we trim to the requested node client-side.
                 archive_params = {
                     "datetime_beginning_utc": date_range,
                     "type":                   "ZONE",
@@ -106,7 +112,7 @@ def fetch_page(pnode_id: int, window_from: date, window_to: date, start_row: int
                     "rowCount":               PAGE_SIZE,
                     "startRow":               start_row,
                 }
-                resp = requests.get(PJM_API_URL, params=archive_params, headers=headers, timeout=60)
+                resp = _get_with_retry(PJM_API_URL, archive_params, headers)
                 resp.raise_for_status()
                 j = resp.json()
                 items = j.get("items", [])
@@ -139,6 +145,8 @@ def fetch_page(pnode_id: int, window_from: date, window_to: date, start_row: int
             else:
                 raise RuntimeError(f"Failed after {RETRY_COUNT} attempts: {e}")
 
+    raise RuntimeError("fetch_page: retry loop exhausted unexpectedly")
+
 
 def fetch_window(pnode_id: int, window_from: date, window_to: date) -> pd.DataFrame:
     """Fetch all pages for a single date window, handling pagination."""
@@ -157,48 +165,74 @@ def fetch_window(pnode_id: int, window_from: date, window_to: date) -> pd.DataFr
     return pd.concat(all_frames, ignore_index=True) if all_frames else pd.DataFrame()
 
 
+def _mmyy(dt: pd.Timestamp) -> str:
+    return dt.strftime("%m%y")
+
+
+def _normalise(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalise column names and timestamp format."""
+    df.columns = [c.strip().lower() for c in df.columns]
+    if "datetime_beginning_utc" in df.columns:
+        df = df.rename(columns={"datetime_beginning_utc": "timestamp_utc"})
+    df["timestamp_utc"] = pd.to_datetime(df["timestamp_utc"], utc=True)
+    return df
+
+
 def download_node(pnode_id: int, start_date: str, end_date: str) -> None:
-    """Download all day-ahead LMP data for a node, chunked into yearly windows."""
-    output_file = OUTPUT_DIR / f"day_ahead_pjm_{pnode_id}.csv"
+    """
+    Download all day-ahead LMP data for a node, chunked into yearly windows.
+
+    Each window is saved to data/raw/pjm_{pnode_id}/{from}_{to}.csv immediately
+    on success. Already-downloaded windows are skipped, enabling resumption
+    after interruptions. All windows are merged into
+    data/day_ahead_pjm_{pnode_id}_{MMYY}_{MMYY}.csv.
+    """
+    raw_node_dir = RAW_DIR / f"pjm_{pnode_id}"
+    raw_node_dir.mkdir(parents=True, exist_ok=True)
 
     start = datetime.strptime(start_date, "%Y-%m-%d").date()
     end   = datetime.strptime(end_date,   "%Y-%m-%d").date()
 
-    windows   = list(date_windows(start, end))
-    all_frames = []
-
+    windows = list(date_windows(start, end))
     print(f"Downloading PJM day-ahead LMPs — node {pnode_id} ({start_date} → {end_date})")
     print(f"  {len(windows)} yearly window(s) to fetch\n")
 
     for w_from, w_to in tqdm(windows, desc="Windows", unit=" yr"):
-        df = fetch_window(pnode_id, w_from, w_to)
-        if not df.empty:
-            all_frames.append(df)
+        raw_file = raw_node_dir / f"{w_from}_{w_to}.csv"
 
-    if not all_frames:
-        print("No data returned.")
+        if raw_file.exists():
+            tqdm.write(f"  Skipping {w_from} → {w_to} (already on disk)")
+            continue
+
+        df = fetch_window(pnode_id, w_from, w_to)
+        if df.empty:
+            tqdm.write(f"  Warning: no data for {w_from} → {w_to}")
+            continue
+
+        df = _normalise(df)
+        df.to_csv(raw_file, index=False)
+        tqdm.write(f"  Saved {len(df):,} rows → {raw_file.name}")
+
+    # ── Merge all raw windows ──────────────────────────────────────────────────
+    raw_files = sorted(raw_node_dir.glob("*.csv"))
+    if not raw_files:
+        print("No data downloaded.")
         return
 
-    result = pd.concat(all_frames, ignore_index=True)
-
-    # Normalise column names
-    result.columns = [c.strip().lower() for c in result.columns]
-
-    # Rename timestamp for clarity
-    if "datetime_beginning_utc" in result.columns:
-        result = result.rename(columns={"datetime_beginning_utc": "timestamp_utc"})
-
+    print(f"\nMerging {len(raw_files)} window file(s)...")
+    result = pd.concat([pd.read_csv(f) for f in raw_files], ignore_index=True)
     result["timestamp_utc"] = pd.to_datetime(result["timestamp_utc"], utc=True)
-
-    # Deduplicate and sort
     result = (result
               .drop_duplicates(subset=["timestamp_utc"])
               .sort_values("timestamp_utc")
               .reset_index(drop=True))
 
-    result.to_csv(output_file, index=False)
+    first = _mmyy(result["timestamp_utc"].iloc[0])
+    last  = _mmyy(result["timestamp_utc"].iloc[-1])
+    output_file = OUTPUT_DIR / f"day_ahead_pjm_{pnode_id}_{first}_{last}.csv"
 
-    print(f"\nSaved {len(result):,} rows to {output_file}")
+    result.to_csv(output_file, index=False)
+    print(f"Saved {len(result):,} rows to {output_file}")
     print(f"  First: {result['timestamp_utc'].iloc[0]}")
     print(f"  Last:  {result['timestamp_utc'].iloc[-1]}")
 

@@ -19,6 +19,7 @@ dependencies = [
     "bs4>=0.0.2",
     "meteostat>=2.1.4",
     "dotenv>=0.9.9",
+    "entsoe-py>=0.7.11",
 ]
 
 [build-system]
